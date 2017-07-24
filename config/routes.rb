@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       jsonapi_resources :materials do
         jsonapi_relationships
       end
+      post 'permissions/check', to: 'permissions#check'
     end
   end
 end
