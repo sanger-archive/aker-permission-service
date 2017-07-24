@@ -1,6 +1,6 @@
 module Api
   module V1
-    class PermissionsController < JSONAPI::ResourceController
+    class PermissionsController < ApiController
       def check
         data = check_params
         ok = PermissionChecker.check(data[:permission_type], data[:names], data[:material_uuids])

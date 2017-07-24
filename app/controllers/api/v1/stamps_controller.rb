@@ -1,6 +1,6 @@
 module Api
   module V1
-    class StampsController < JSONAPI::ResourceController
+    class StampsController < ApiController
     end
   end
 end

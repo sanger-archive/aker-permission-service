@@ -1,6 +1,6 @@
 module Api
   module V1
-    class MaterialsController < JSONAPI::ResourceController
+    class MaterialsController < ApiController
     end
   end
 end
