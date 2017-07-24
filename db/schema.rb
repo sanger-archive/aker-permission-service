@@ -28,7 +28,7 @@ ActiveRecord::Schema.define(version: 20170721144531) do
     t.index ["permitted"], name: "index_permissions_on_permitted", using: :btree
   end
 
-  create_table "stamp_materials", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
+  create_table "stamp_materials", force: :cascade do |t|
     t.uuid     "material_uuid", null: false
     t.uuid     "stamp_id",      null: false
     t.datetime "created_at",    null: false

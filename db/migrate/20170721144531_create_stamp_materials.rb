@@ -1,6 +1,6 @@
 class CreateStampMaterials < ActiveRecord::Migration[5.0]
   def change
-    create_table :stamp_materials, id: :uuid do |t|
+    create_table :stamp_materials do |t|
       t.uuid :material_uuid, null: false
       t.references :stamp, foreign_key: true, type: :uuid, null: false
 
