@@ -142,7 +142,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
         it 'does not alter the owner' do
           expect(data[:attributes][:'owner-id']).to eq(owner)
         end
-        
+
         it 'correctly updates the stamp' do
           @stamp.reload
           expect(@stamp.name).to eq('meringue')
@@ -236,6 +236,23 @@ RSpec.describe 'api/v1/stamps', type: :request do
 
       it 'does not change the stamp' do
         expect(@stamp.reload.name).to eq(@old_stamp_name)
+      end
+    end
+  end
+
+  describe 'DELETE' do
+    context 'when I own the stamp' do
+      let(:owner) { email }
+
+      before do
+        @del_stamp = @stamps.second
+        delete api_v1_stamp_path(@del_stamp.id), headers: headers
+      end
+
+      it { expect(response).to have_http_status(:no_content) }
+
+      it 'deletes the model' do
+        expect(Stamp.where(id: @del_stamp.id).first).to be_nil
       end
     end
   end
