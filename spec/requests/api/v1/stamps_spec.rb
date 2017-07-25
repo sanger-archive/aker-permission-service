@@ -4,9 +4,12 @@ RSpec.describe 'api/v1/stamps', type: :request do
   let(:vnd) { 'application/vnd.api+json' }
   let(:email) { 'me@here.com' }
   let(:groups) { ['world', 'pirates'] }
+  let(:owner) { 'owner@here.com' }
+
   let(:jwt) do
     JWT.encode({ data: { 'email' => email, 'groups' => groups }}, Rails.configuration.jwt_secret_key, 'HS256')
   end
+
   let(:headers) do
     {
       'Content-Type' => vnd,
@@ -15,10 +18,12 @@ RSpec.describe 'api/v1/stamps', type: :request do
     }
   end
 
-  let(:data) { JSON.parse(response.body, symbolize_names: true)[:data] }
+  let(:body) { JSON.parse(response.body, symbolize_names: true) }
+  let(:data) { body[:data] }
+  let(:errors) { body[:errors] }
 
   before do
-    @stamps = create_list(:stamp, 2)
+    @stamps = create_list(:stamp, 2, owner_id: owner)
     @stamp = @stamps.first
     @stamp.permissions.create!(permission_type: :spend, permitted: 'pirates')
     create(:stamp_material, stamp: @stamp)
@@ -114,6 +119,124 @@ RSpec.describe 'api/v1/stamps', type: :request do
     it 'contains the material' do
       expect(data.length).to eq(1)
       expect(data.first[:id]).to eq(@stamp.stamp_materials.first.id.to_s)
+    end
+  end
+
+  describe 'PUT' do
+    context 'when I own the stamp' do
+      let(:owner) { email }
+
+      context 'when the name is being changed' do
+        before do
+          data = { id: @stamp.id, type: 'stamps', attributes: { name: "meringue" } }
+          put api_v1_stamp_path(@stamp.id), params: { data: data }.to_json, headers: headers
+        end
+
+        it { expect(response).to have_http_status(:ok) }
+
+        it 'contains the stamp' do
+          expect(data[:id]).to eq(@stamp.id)
+          expect(data[:attributes][:name]).to eq('meringue')
+        end
+
+        it 'does not alter the owner' do
+          expect(data[:attributes][:'owner-id']).to eq(owner)
+        end
+        
+        it 'correctly updates the stamp' do
+          @stamp.reload
+          expect(@stamp.name).to eq('meringue')
+          expect(@stamp.owner_id).to eq(owner)
+        end
+      end
+
+      context 'when a new owner is specified' do
+        before do
+          data = { id: @stamp.id, type: 'stamps', attributes: { name: "meringue", 'owner-id': 'jeff' } }
+          put api_v1_stamp_path(@stamp.id), params: { data: data }.to_json, headers: headers
+        end
+
+        it { expect(response).to have_http_status(:bad_request) }
+
+        it 'contains an appropriate error' do
+          expect(errors).not_to be_empty
+          expect(errors.first[:detail]).to match(/owner[_-]id/)
+        end
+      end
+
+    end
+
+    context 'when I do not own the stamp' do
+      before do
+        @old_stamp_name = @stamp.name
+        data = { id: @stamp.id, type: 'stamps', attributes: { name: "meringue" } }
+        put api_v1_stamp_path(@stamp.id), params: { data: data }.to_json, headers: headers
+      end
+
+      it { expect(response).to have_http_status(:forbidden) }
+
+      it 'does not change the stamp' do
+        expect(@stamp.reload.name).to eq(@old_stamp_name)
+      end
+    end
+  end
+
+  describe 'PATCH' do
+    context 'when I own the stamp' do
+      let(:owner) { email }
+
+      context 'when the name is being changed' do
+        before do
+          data = { id: @stamp.id, type: 'stamps', attributes: { name: "meringue" } }
+          patch api_v1_stamp_path(@stamp.id), params: { data: data }.to_json, headers: headers
+        end
+
+        it { expect(response).to have_http_status(:ok) }
+
+        it 'contains the stamp' do
+          expect(data[:id]).to eq(@stamp.id)
+          expect(data[:attributes][:name]).to eq('meringue')
+        end
+
+        it 'does not alter the owner' do
+          expect(data[:attributes][:'owner-id']).to eq(owner)
+        end
+
+        it 'correctly updates the stamp' do
+          @stamp.reload
+          expect(@stamp.name).to eq('meringue')
+          expect(@stamp.owner_id).to eq(owner)
+        end
+      end
+
+      context 'when a new owner is specified' do
+        before do
+          data = { id: @stamp.id, type: 'stamps', attributes: { name: "meringue", 'owner-id': 'jeff' } }
+          patch api_v1_stamp_path(@stamp.id), params: { data: data }.to_json, headers: headers
+        end
+
+        it { expect(response).to have_http_status(:bad_request) }
+
+        it 'contains an appropriate error' do
+          expect(errors).not_to be_empty
+          expect(errors.first[:detail]).to match(/owner[_-]id/)
+        end
+      end
+
+    end
+
+    context 'when I do not own the stamp' do
+      before do
+        @old_stamp_name = @stamp.name
+        data = { id: @stamp.id, type: 'stamps', attributes: { name: "meringue" } }
+        patch api_v1_stamp_path(@stamp.id), params: { data: data }.to_json, headers: headers
+      end
+
+      it { expect(response).to have_http_status(:forbidden) }
+
+      it 'does not change the stamp' do
+        expect(@stamp.reload.name).to eq(@old_stamp_name)
+      end
     end
   end
 
