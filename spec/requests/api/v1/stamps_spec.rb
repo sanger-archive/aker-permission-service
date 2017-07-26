@@ -274,6 +274,30 @@ RSpec.describe 'api/v1/stamps', type: :request do
         expect(Stamp.where(id: @stamp_id).first).not_to be_nil
       end
     end
+
+    context 'when I own the stamp and it has permissions and materials' do
+      let(:owner) { user }
+
+      before do
+        @perm_id = @stamp.permissions.first.id
+        @mat_id = @stamp.stamp_materials.first.id
+        delete api_v1_stamp_path(@stamp.id), headers: headers
+      end
+
+      it { expect(response).to have_http_status(:no_content) }
+
+      it 'deletes the model' do
+        expect(Stamp.where(id: @stamp.id).first).to be_nil
+      end
+
+      it 'deletes the associated permissions' do
+        expect(AkerPermissionGem::Permission.where(id: @perm_id).first).to be_nil
+      end
+
+      it 'deletes the associated materials' do
+        expect(StampMaterial.where(id: @mat_id).first).to be_nil
+      end
+    end
   end
 
   describe 'POST #create' do
