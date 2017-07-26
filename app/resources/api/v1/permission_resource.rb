@@ -17,6 +17,18 @@ module Api
         []
       end
 
+      before_save do
+        if context[:current_user].email!=@model.accessible.owner_id
+          raise CanCan::AccessDenied
+        end
+      end
+
+      before_remove do
+        if context[:current_user].email!=@model.accessible.owner_id
+          raise CanCan::AccessDenied
+        end
+      end
+
       before_create do
         @model.accessible_type = 'Stamp'
       end
