@@ -328,5 +328,6 @@ RSpec.describe 'api/v1/stamps', type: :request do
       end
     end
   end
-
+  
 end
+

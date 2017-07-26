@@ -11,10 +11,10 @@ module Api
       end
 
       def self.updatable_fields(context)
-        super - [:owner_id]
+        [:name]
       end
       def self.creatable_fields(context)
-        super - [:owner_id]
+        [:name]
       end
 
       before_update do
