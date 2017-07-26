@@ -73,6 +73,22 @@ RSpec.describe 'api/v1/permissions', type: :request do
     end
   end
 
+  describe 'GET stamp' do
+    let(:perm) { @stamp.permissions.first }
+
+    before do
+      get api_v1_permission_stamp_path(perm.id), headers: headers
+    end
+
+    it { expect(response).to have_http_status(:ok) }
+
+    it 'contains the stamp' do
+      expect(data[:id]).to eq(@stamp.id)
+      atr = data[:attributes]
+      expect(atr[:name]).to eq(@stamp.name)
+    end
+  end
+
   describe 'POST #create' do
     let(:postdata) do
       {
@@ -146,6 +162,28 @@ RSpec.describe 'api/v1/permissions', type: :request do
       end
     end
 
+  end
+
+  describe 'PUT #update' do
+    let(:perm_id) { @stamp.permissions.first.id }
+    let(:owner) { user }
+
+    it 'does not succeed' do
+      postdata = { id: perm_id, type: 'permissions', attributes: { 'permission-type': :write, permitted: 'jeff', 'accessible-id': @stamp.id }}
+      expect { put api_v1_permission_path(perm_id), params: { data: postdata }.to_json, headers: headers }.to raise_error(ActionController::RoutingError)
+      expect(@stamp.permissions.first.reload.permitted).to eq('pirates')
+    end
+  end
+
+  describe 'PATCH #update' do
+    let(:perm_id) { @stamp.permissions.first.id }
+    let(:owner) { user }
+
+    it 'does not succeed' do
+      patchdata = { id: perm_id, type: 'permissions', attributes: { 'permission-type': :write, permitted: 'jeff', 'accessible-id': @stamp.id }}
+      expect { patch api_v1_permission_path(perm_id), params: { data: patchdata }.to_json, headers: headers }.to raise_error(ActionController::RoutingError)
+      expect(@stamp.permissions.first.reload.permitted).to eq('pirates')
+    end
   end
   
 end
