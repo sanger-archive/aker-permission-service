@@ -17,13 +17,10 @@ module Api
         [:name]
       end
 
-      before_update do
-        if @model.owner_id != context[:current_user].email
-          raise CanCan::AccessDenied
-        end
-      end
+      before_update :authorize!
+      before_remove :authorize!
 
-      before_remove do
+      def authorize!
         if @model.owner_id != context[:current_user].email
           raise CanCan::AccessDenied
         end

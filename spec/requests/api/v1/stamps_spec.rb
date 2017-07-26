@@ -2,12 +2,12 @@ require 'rails_helper'
 
 RSpec.describe 'api/v1/stamps', type: :request do
   let(:vnd) { 'application/vnd.api+json' }
-  let(:email) { 'me@here.com' }
+  let(:user) { 'me@here.com' }
   let(:groups) { ['world', 'pirates'] }
   let(:owner) { 'owner@here.com' }
 
   let(:jwt) do
-    JWT.encode({ data: { 'email' => email, 'groups' => groups }}, Rails.configuration.jwt_secret_key, 'HS256')
+    JWT.encode({ data: { 'email' => user, 'groups' => groups }}, Rails.configuration.jwt_secret_key, 'HS256')
   end
 
   let(:headers) do
@@ -130,7 +130,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
 
   describe 'PUT #update' do
     context 'when I own the stamp' do
-      let(:owner) { email }
+      let(:owner) { user }
 
       context 'when the name is being changed' do
         before do
@@ -189,7 +189,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
 
   describe 'PATCH #update' do
     context 'when I own the stamp' do
-      let(:owner) { email }
+      let(:owner) { user }
 
       context 'when the name is being changed' do
         before do
@@ -248,7 +248,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
 
   describe 'DELETE #destroy' do
     context 'when I own the stamp' do
-      let(:owner) { email }
+      let(:owner) { user }
 
       before do
         @stamp_id = @stamps.second.id
@@ -297,14 +297,14 @@ RSpec.describe 'api/v1/stamps', type: :request do
         expect(data[:id]).not_to be_nil
         atr = data[:attributes]
         expect(atr[:name]).to eq(stamp_name)
-        expect(atr[:'owner-id']).to eq(email)
+        expect(atr[:'owner-id']).to eq(user)
       end
 
       it 'should have created the stamp' do
         s = Stamp.find(data[:id])
         expect(s).not_to be_nil
         expect(s.name).to eq(stamp_name)
-        expect(s.owner_id).to eq(email)
+        expect(s.owner_id).to eq(user)
       end
     end
 
@@ -328,6 +328,6 @@ RSpec.describe 'api/v1/stamps', type: :request do
       end
     end
   end
-  
+
 end
 
