@@ -18,7 +18,13 @@ RSpec.describe 'api/v1/stamps', type: :request do
     }
   end
 
-  let(:body) { JSON.parse(response.body, symbolize_names: true) }
+  let(:body) do
+    if response.body.present?
+      JSON.parse(response.body, symbolize_names: true)
+    else
+      {}
+    end
+  end
   let(:data) { body[:data] }
   let(:errors) { body[:errors] }
 
@@ -29,7 +35,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
     create(:stamp_material, stamp: @stamp)
   end
 
-  describe 'INDEX' do
+  describe 'GET #index' do
     before do
       get api_v1_stamps_path, headers: headers
     end
@@ -45,7 +51,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
     end
   end
 
-  describe 'GET' do
+  describe 'GET #show' do
     before do
       get api_v1_stamp_path(@stamp.id), headers: headers
     end
@@ -122,7 +128,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
     end
   end
 
-  describe 'PUT' do
+  describe 'PUT #update' do
     context 'when I own the stamp' do
       let(:owner) { email }
 
@@ -181,7 +187,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
     end
   end
 
-  describe 'PATCH' do
+  describe 'PATCH #update' do
     context 'when I own the stamp' do
       let(:owner) { email }
 
@@ -240,19 +246,85 @@ RSpec.describe 'api/v1/stamps', type: :request do
     end
   end
 
-  describe 'DELETE' do
+  describe 'DELETE #destroy' do
     context 'when I own the stamp' do
       let(:owner) { email }
 
       before do
-        @del_stamp = @stamps.second
-        delete api_v1_stamp_path(@del_stamp.id), headers: headers
+        @stamp_id = @stamps.second.id
+        delete api_v1_stamp_path(@stamp_id), headers: headers
       end
 
       it { expect(response).to have_http_status(:no_content) }
 
       it 'deletes the model' do
-        expect(Stamp.where(id: @del_stamp.id).first).to be_nil
+        expect(Stamp.where(id: @stamp_id).first).to be_nil
+      end
+    end
+
+    context 'when I do not own the stamp' do
+      before do
+        @stamp_id = @stamps.second.id
+        delete api_v1_stamp_path(@stamp_id), headers: headers
+      end
+
+      it { expect(response).to have_http_status(:forbidden) }
+
+      it 'does not delete the model' do
+        expect(Stamp.where(id: @stamp_id).first).not_to be_nil
+      end
+    end
+  end
+
+  describe 'POST #create' do
+    let(:stamp_name) { 'Marzipan' }
+
+    before do
+      post api_v1_stamps_path, params: { data: postdata }.to_json, headers: headers
+    end
+
+    context 'when the request is correct' do
+      let(:postdata) do
+        {
+          type: 'stamps',
+          attributes: { name: stamp_name },
+        }
+      end
+
+      it { expect(response).to have_http_status(:created) }
+
+      it 'should include the stamp in the response' do
+        expect(data[:id]).not_to be_nil
+        atr = data[:attributes]
+        expect(atr[:name]).to eq(stamp_name)
+        expect(atr[:'owner-id']).to eq(email)
+      end
+
+      it 'should have created the stamp' do
+        s = Stamp.find(data[:id])
+        expect(s).not_to be_nil
+        expect(s.name).to eq(stamp_name)
+        expect(s.owner_id).to eq(email)
+      end
+    end
+
+    context 'when I specify an owner' do
+      let(:postdata) do
+        {
+          type: 'stamps',
+          attributes: { name: stamp_name, 'owner-id': 'jeff' },
+        }
+      end
+
+      it { expect(response).to have_http_status(:bad_request) }
+
+      it 'includes an error' do
+        expect(errors).not_to be_empty
+        expect(errors.first[:detail]).to match(/owner[_-]id/)
+      end
+
+      it 'should not have created the stamp' do
+        expect(Stamp.where(name: stamp_name).first).to be_nil
       end
     end
   end
