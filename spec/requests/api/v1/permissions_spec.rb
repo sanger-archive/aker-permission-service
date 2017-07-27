@@ -169,8 +169,8 @@ RSpec.describe 'api/v1/permissions', type: :request do
     let(:owner) { user }
 
     it 'does not succeed' do
-      postdata = { id: perm_id, type: 'permissions', attributes: { 'permission-type': :write, permitted: 'jeff', 'accessible-id': @stamp.id }}
-      expect { put api_v1_permission_path(perm_id), params: { data: postdata }.to_json, headers: headers }.to raise_error(ActionController::RoutingError)
+      putdata = { id: perm_id, type: 'permissions', attributes: { 'permission-type': :write, permitted: 'jeff', 'accessible-id': @stamp.id }}
+      expect { put api_v1_permission_path(perm_id), params: { data: putdata }.to_json, headers: headers }.to raise_error(ActionController::RoutingError)
       expect(@stamp.permissions.first.reload.permitted).to eq('pirates')
     end
   end
@@ -180,7 +180,7 @@ RSpec.describe 'api/v1/permissions', type: :request do
     let(:owner) { user }
 
     it 'does not succeed' do
-      patchdata = { id: perm_id, type: 'permissions', attributes: { 'permission-type': :write, permitted: 'jeff', 'accessible-id': @stamp.id }}
+      patchdata = { id: perm_id, type: 'permissions', attributes: { 'permission-type': :write, permitted: 'jeff' }}
       expect { patch api_v1_permission_path(perm_id), params: { data: patchdata }.to_json, headers: headers }.to raise_error(ActionController::RoutingError)
       expect(@stamp.permissions.first.reload.permitted).to eq('pirates')
     end
