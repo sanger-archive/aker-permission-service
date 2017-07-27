@@ -40,6 +40,7 @@ gem 'jsonapi-resources'
 gem 'pg'
 gem 'aker_credentials_gem', github: 'sanger/aker-credentials'
 gem 'aker_permission_gem', github: 'sanger/aker-permission'
+gem 'matcon_client', github: 'khelwood/aker-matcon-client', branch: 'verify_ownership'
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
@@ -48,6 +49,7 @@ group :development, :test do
   gem 'factory_girl_rails'
   gem 'database_cleaner'
   gem 'jsonapi-resources-matchers', require: false
+  gem 'webmock'
 end
 
 group :development do

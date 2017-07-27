@@ -53,4 +53,6 @@ Rails.application.configure do
   config.file_watcher = ActiveSupport::EventedFileUpdateChecker
 
   config.jwt_secret_key = 'development'
+
+  config.material_url = 'http://localhost:5000'
 end
