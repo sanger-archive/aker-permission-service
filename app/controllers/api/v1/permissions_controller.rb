@@ -13,11 +13,13 @@ module Api
       end
 
     private
+
       def check_params
         d = params.require(:data)
         [:permission_type, :names, :material_uuids].each { |f| d.require(f) }
         d.permit(:permission_type, names: [], material_uuids: [])
       end
+
     end
   end
 end

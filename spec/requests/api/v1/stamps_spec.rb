@@ -353,5 +353,49 @@ RSpec.describe 'api/v1/stamps', type: :request do
     end
   end
 
+  describe 'POST #set_permissions' do
+    let(:permission_data) do
+      [
+        { 'permission-type': :spend, permitted: 'jeff' },
+        { 'permission-type': :write, permitted: 'jeff' },
+        { 'permission-type': :spend, permitted: 'dirk' },
+      ]
+    end
+
+    def permission_results
+      @stamp.reload.permissions.map do |p|
+        {
+          'permission-type': p.permission_type.to_sym,
+          permitted: p.permitted,
+        }
+      end
+    end
+
+    before do
+      post api_v1_stamp_set_permissions_path(@stamp.id), params: { data: permission_data }.to_json, headers: headers
+    end
+
+    context 'when I own the stamp' do
+      let(:owner) { user }
+
+      it { expect(response).to have_http_status(:created) }
+
+      it 'should update the stamp permissions' do
+        expect(permission_results).to match_array(permission_data)
+      end
+    end
+
+    context 'when I do not own the stamp' do
+
+      it { expect(response).to have_http_status(:forbidden) }
+
+      it 'should not update the stamp permissions' do
+        expect(permission_results).to match_array([{'permission-type': :spend, permitted: 'pirates'}])
+      end
+
+    end
+
+  end
+
 end
 
