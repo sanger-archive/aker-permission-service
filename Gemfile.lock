@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: https://github.com/sanger/aker-permission.git
-  revision: 84e258b187cda8108a764069b5c49e5fa6fc383e
+  revision: b25e025f638d2473da5431cc04f3e8cfa79f56ad
   specs:
     aker_permission_gem (0.4.0)
       cancancan
