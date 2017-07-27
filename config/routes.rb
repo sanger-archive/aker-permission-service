@@ -3,7 +3,9 @@ Rails.application.routes.draw do
     namespace :v1 do
       jsonapi_resources :stamps do
         jsonapi_relationships only: [ :show, :get_related_resources ]
-        post 'set_permissions', to: :set_permissions
+        post :set_permissions
+        post :apply
+        post :unapply
       end
       jsonapi_resources :permissions, only: [ :create, :show, :index, :destroy ] do
         jsonapi_relationships only: [ :show, :get_related_resource ]

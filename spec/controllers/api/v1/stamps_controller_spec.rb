@@ -47,7 +47,7 @@ RSpec.describe Api::V1::StampsController, type: :controller do
 
     context 'when stamp is owned by the user' do
       context 'when permissions are replaced' do
-        it { expect(response).to have_http_status(:created) }
+        it { expect(response).to have_http_status(:ok) }
 
         it 'replaces the stamp permissions' do
           expect(result_permissions).to match_array(permission_data)
@@ -57,7 +57,7 @@ RSpec.describe Api::V1::StampsController, type: :controller do
       context 'when permissions are removed without adding new ones' do
         let(:permission_data) { [] }
 
-        it { expect(response).to have_http_status(:created) }
+        it { expect(response).to have_http_status(:ok) }
 
         it 'clears the stamp permissions' do
           expect(result_permissions).to be_empty
@@ -67,7 +67,7 @@ RSpec.describe Api::V1::StampsController, type: :controller do
       context 'when permissions are added to a stamp that had none' do
         let(:init_permissions) { [] }
 
-        it { expect(response).to have_http_status(:created) }
+        it { expect(response).to have_http_status(:ok) }
 
         it 'sets the new stamp permissions' do
           expect(result_permissions).to match_array(permission_data)

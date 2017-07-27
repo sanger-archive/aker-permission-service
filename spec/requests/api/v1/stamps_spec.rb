@@ -378,7 +378,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
     context 'when I own the stamp' do
       let(:owner) { user }
 
-      it { expect(response).to have_http_status(:created) }
+      it { expect(response).to have_http_status(:ok) }
 
       it 'should update the stamp permissions' do
         expect(permission_results).to match_array(permission_data)
