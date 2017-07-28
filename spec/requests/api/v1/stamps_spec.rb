@@ -397,5 +397,81 @@ RSpec.describe 'api/v1/stamps', type: :request do
 
   end
 
+  describe 'POST #apply' do
+    let(:post_materials) { [SecureRandom.uuid] }
+    let(:postdata) { { data: { materials: post_materials } } }
+
+    before do
+      request_data = { owner_id: user, materials: post_materials }
+      stub_request(:post, "#{Rails.configuration.material_url}/materials/verify_ownership").
+        with(body: request_data.to_json).
+        to_return(status: ownership_status)
+      @init_materials = @stamp.stamp_materials.map(&:material_uuid)
+      post api_v1_stamp_apply_path(@stamp.id), params: postdata.to_json, headers: headers
+    end
+
+    def result_materials
+      @stamp.reload.stamp_materials.map(&:material_uuid)
+    end
+
+    context 'when I own the materials' do
+      let(:ownership_status) { 200 }
+
+      it 'should stamp the materials' do
+        expect(result_materials).to match_array(@init_materials+post_materials)
+      end
+    end
+
+    context 'when I do not own the materials' do
+      let(:ownership_status) { 403 }
+
+      it { expect(response).to have_http_status(:forbidden) }
+
+      it 'should not stamp the materials' do
+        expect(result_materials).to match_array(@init_materials)
+      end
+    end
+  end
+
+  describe 'POST #unapply' do
+    before do
+      create(:stamp_material, stamp: @stamp)
+      @init_materials = result_materials
+      @post_materials = @init_materials[0,1]
+      @remaining_materials = @init_materials[1,@init_materials.length]
+
+      request_data = { owner_id: user, materials: @post_materials }
+      stub_request(:post, "#{Rails.configuration.material_url}/materials/verify_ownership").
+        with(body: request_data.to_json).
+        to_return(status: ownership_status)
+      postdata = { data: { materials: @post_materials } }
+      post api_v1_stamp_unapply_path(@stamp.id), params: postdata.to_json, headers: headers
+    end
+
+    def result_materials
+      @stamp.reload.stamp_materials.map(&:material_uuid)
+    end
+
+    context 'when I own the materials' do
+      let(:ownership_status) { 200 }
+
+      it { expect(response).to have_http_status(:ok) }
+
+      it 'should unstamp the materials' do
+        expect(result_materials).to match_array(@remaining_materials)
+      end
+    end
+
+    context 'when I do not own the materials' do
+      let(:ownership_status) { 403 }
+
+      it { expect(response).to have_http_status(:forbidden) }
+
+      it 'should not unstamp the materials' do
+        expect(result_materials).to match_array(@init_materials)
+      end
+    end
+  end
+
 end
 
