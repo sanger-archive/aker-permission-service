@@ -29,7 +29,7 @@ module Api
             StampMaterial.create!(materials.map { |m| { stamp: stamp, material_uuid: m } })
           end
         end
-        render_apply_response
+        render_apply_response(stamp)
       end
 
       def unapply
@@ -40,10 +40,10 @@ module Api
         materials.select! { |m| current_materials_set.include?(m) }
         unless materials.empty?
           ActiveRecord::Base.transaction do
-            StampMaterial.where(stamp_id: stamp.id, material_uuid: m).destroy_all
+            StampMaterial.where(stamp_id: stamp.id, material_uuid: materials).destroy_all
           end
         end
-        render_apply_response
+        render_apply_response(stamp)
       end
 
     private
@@ -75,7 +75,7 @@ module Api
         params.require(:data).require(:materials)
       end
 
-      def render_apply_response
+      def render_apply_response(stamp)
         jsondata = JSONAPI::ResourceSerializer.new(Api::V1::StampResource, include: ['materials']).serialize_to_hash(Api::V1::StampResource.new(stamp, nil))
         render json: jsondata, status: :ok, content_type: 'application/vnd.api+json'
       end

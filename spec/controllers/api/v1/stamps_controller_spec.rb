@@ -10,6 +10,10 @@ RSpec.describe Api::V1::StampsController, type: :controller do
     OpenStruct.new(email: user, groups: ['world'])
   end
 
+  before do
+    allow_any_instance_of(Api::V1::StampsController).to receive(:current_user).and_return(current_user)
+  end
+
   describe '#set_permissions' do
     let(:stamp) do
       s = create(:stamp, owner_id: owner)
@@ -41,7 +45,6 @@ RSpec.describe Api::V1::StampsController, type: :controller do
     end
 
     before do
-      allow_any_instance_of(Api::V1::StampsController).to receive(:current_user).and_return(current_user)
       post :set_permissions, params: { data: permission_data, stamp_id: stamp.id }
     end
 
@@ -86,6 +89,160 @@ RSpec.describe Api::V1::StampsController, type: :controller do
           { 'permission-type': :write, permitted: 'beta' },
         ]
         expect(result_permissions).to match_array(initial_permissions)
+      end
+    end
+
+  end
+
+  describe '#apply' do
+    let(:owner) { 'someone_else' } # I do not need to own the stamp
+    let(:stamp) do
+      s = create(:stamp, owner_id: owner)
+      if init_materials.present?
+        init_materials.each { |mu| create(:stamp_material, stamp: s, material_uuid: mu) }
+      end
+      s
+    end
+    let(:init_materials) { [SecureRandom.uuid] }
+    let(:post_materials) { [SecureRandom.uuid, SecureRandom.uuid] }
+
+    def result_materials
+      stamp.reload.stamp_materials.map(&:material_uuid)
+    end
+
+    before do
+      if material_authorised
+        allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_return(nil)
+      else
+        allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_raise(MatconClient::Errors::AccessDenied, nil)
+      end
+      post :apply, params: { data: { materials: post_materials }, stamp_id: stamp.id }
+    end
+
+    context 'when the material is authorised' do
+      let(:material_authorised) { true }
+
+      context 'when the stamp has no materials initially' do
+        let(:init_materials) { [] }
+        it { expect(response).to have_http_status(:ok) }
+
+        it 'links the materials to the stamp' do
+          expect(result_materials).to match_array(post_materials)
+        end
+      end
+
+      context 'when the stamp has materials already' do
+        it { expect(response).to have_http_status(:ok) }
+
+        it 'links the materials to the stamp' do
+          expect(result_materials).to match_array(init_materials + post_materials)
+        end
+      end
+
+      context 'when the init materials and post materials overlap' do
+        it { expect(response).to have_http_status(:ok) }
+
+        let(:init_materials) { [SecureRandom.uuid, post_materials.first] }
+
+        it 'links the materials to the stamp' do
+          expect(result_materials).to match_array(init_materials + post_materials[1, post_materials.length])
+        end
+      end
+
+      context 'when all the post materials are already linked to the stamp' do
+        it { expect(response).to have_http_status(:ok) }
+
+        let(:init_materials) { [SecureRandom.uuid]+post_materials }
+
+        it 'links the materials to the stamp' do
+          expect(result_materials).to match_array(init_materials)
+        end
+      end
+    end
+
+    context 'when the material is not authorised' do
+      let(:material_authorised) { false }
+      it { expect(response).to have_http_status(:forbidden) }
+
+      it 'does not change the materials for the stamp' do
+        expect(result_materials).to match_array(init_materials)
+      end
+    end
+
+  end
+
+  describe '#unapply' do
+    let(:owner) { 'someone_else' } # I do not need to own the stamp
+    let(:stamp) do
+      s = create(:stamp, owner_id: owner)
+      if init_materials.present?
+        init_materials.each { |mu| create(:stamp_material, stamp: s, material_uuid: mu) }
+      end
+      s
+    end
+    let(:init_materials) { [SecureRandom.uuid, SecureRandom.uuid, SecureRandom.uuid] }
+    let(:post_materials) { init_materials[0,2]+[SecureRandom.uuid] }
+
+    def result_materials
+      stamp.reload.stamp_materials.map(&:material_uuid)
+    end
+
+    before do
+      if material_authorised
+        allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_return(nil)
+      else
+        allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_raise(MatconClient::Errors::AccessDenied, nil)
+      end
+      post :unapply, params: { data: { materials: post_materials }, stamp_id: stamp.id }
+    end
+
+    context 'when the material is authorised' do
+      let(:material_authorised) { true }
+
+      context 'when the stamp has no materials initially' do
+        let(:init_materials) { [] }
+        it { expect(response).to have_http_status(:ok) }
+
+        it 'does not alter the stamp materials' do
+          expect(result_materials).to be_empty
+        end
+      end
+
+      context 'when all materials get unstamped' do
+        let(:post_materials) { init_materials + [SecureRandom.uuid] }
+
+        it { expect(response).to have_http_status(:ok) }
+
+        it 'removes all materials' do
+          expect(result_materials).to be_empty
+        end
+      end
+
+      context 'when some materials get unstamped' do
+        it { expect(response).to have_http_status(:ok) }
+
+        it 'removes the correct materials' do
+          expect(result_materials).to match_array(init_materials[2, init_materials.length])
+        end
+      end
+
+      context 'when none of the specified materials are linked to the stamp' do
+        it { expect(response).to have_http_status(:ok) }
+
+        let(:post_materials) { [SecureRandom.uuid, SecureRandom.uuid] }
+
+        it 'does not remove any materials from the stamp' do
+          expect(result_materials).to match_array(init_materials)
+        end
+      end
+    end
+
+    context 'when the material is not authorised' do
+      let(:material_authorised) { false }
+      it { expect(response).to have_http_status(:forbidden) }
+
+      it 'does not change the materials for the stamp' do
+        expect(result_materials).to match_array(init_materials)
       end
     end
 
