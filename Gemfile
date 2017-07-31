@@ -33,6 +33,8 @@ gem 'jbuilder', '~> 2.5'
 
 gem 'jsonapi-resources'
 
+gem 'zipkin-tracer'
+
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
