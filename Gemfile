@@ -9,7 +9,6 @@ end
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 5.0.4'
 # Use sqlite3 as the database for Active Record
-gem 'sqlite3'
 # Use Puma as the app server
 gem 'puma', '~> 3.0'
 # Use SCSS for stylesheets
@@ -40,7 +39,7 @@ gem 'jsonapi-resources'
 gem 'pg'
 gem 'aker_credentials_gem', github: 'sanger/aker-credentials'
 gem 'aker_permission_gem', github: 'sanger/aker-permission'
-gem 'matcon_client', github: 'khelwood/aker-matcon-client', branch: 'verify_ownership'
+gem 'matcon_client', github: 'sanger/aker-matcon-client'
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
@@ -50,6 +49,7 @@ group :development, :test do
   gem 'database_cleaner'
   gem 'jsonapi-resources-matchers', require: false
   gem 'webmock'
+  gem 'sqlite3'
 end
 
 group :development do
