@@ -19,5 +19,7 @@ module AkerStamps
 
     config.accessible_id_type = :uuid
 
+    config.autoload_paths << Rails.root.join('lib')
+
   end
 end

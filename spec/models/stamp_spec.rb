@@ -38,4 +38,27 @@ RSpec.describe Stamp, type: :model do
       expect(StampMaterial.where(id: @mat.id).first).to be_nil
     end
   end
+
+  describe '#deactivate!' do
+    it 'works' do
+      stamp = create(:stamp)
+      expect(stamp).to be_active
+      expect(stamp).not_to be_deactivated
+      stamp.deactivate!
+      expect(stamp).not_to be_active
+      expect(stamp).to be_deactivated
+    end
+
+    context 'when the stamp is already deactivated' do
+      it 'does not alter the deactivated_at time' do
+        time = DateTime.new(2017, 1, 1)
+        stamp = create(:stamp, deactivated_at: time)
+        expect(stamp).to be_deactivated
+        stamp.deactivate!
+        expect(stamp).to be_deactivated
+        expect(stamp.deactivated_at).to eq(time)
+      end
+    end
+      
+  end
 end
