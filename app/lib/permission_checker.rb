@@ -6,6 +6,7 @@ class PermissionChecker
     attr_reader :unpermitted_uuids
 
     def check(permission_type, names, material_uuids)
+      material_uuids = material_uuids.uniq
       @unpermitted_uuids = []
       permitted_uuids = Set.new(
         StampMaterial.where(material_uuid: material_uuids, stamp_id: select_permitted_stamp_ids(permission_type, names)).
@@ -19,7 +20,11 @@ class PermissionChecker
   private
 
     def select_permitted_stamp_ids(permission_type, names)
-      AkerPermissionGem::Permission.select(:accessible_id).where(permission_type: permission_type, permitted: names).distinct()
+      AkerPermissionGem::Permission.select(:accessible_id).
+        joins('JOIN stamps ON (accessible_id = stamps.id)').
+        where(permissions: {permission_type: permission_type, permitted: names},
+              stamps: {deactivated_at: nil}).
+        distinct()
     end
 
   end
