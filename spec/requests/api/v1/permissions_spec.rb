@@ -32,7 +32,7 @@ RSpec.describe 'api/v1/permissions', type: :request do
   before do
     @stamps = create_list(:stamp, 2, owner_id: owner)
     @stamp = @stamps.first
-    @stamp.permissions.create!(permission_type: :spend, permitted: 'pirates')
+    @stamp.permissions.create!(permission_type: :consume, permitted: 'pirates')
     create(:stamp_material, stamp: @stamp)
   end
 
@@ -93,7 +93,7 @@ RSpec.describe 'api/v1/permissions', type: :request do
     let(:postdata) do
       {
         type: 'permissions',
-        attributes: { 'permission-type': :spend, permitted: 'jeff', 'accessible-id': @stamp.id },
+        attributes: { 'permission-type': :consume, permitted: 'jeff', 'accessible-id': @stamp.id },
       }
     end
 
@@ -109,7 +109,7 @@ RSpec.describe 'api/v1/permissions', type: :request do
       it 'should contain a created permission' do
         expect(data[:id]).to be_present
         atr = data[:attributes]
-        expect(atr[:'permission-type'].to_sym).to eq(:spend)
+        expect(atr[:'permission-type'].to_sym).to eq(:consume)
         expect(atr[:permitted]).to eq('jeff')
         expect(atr[:'accessible-id']).to eq(@stamp.id)
       end
@@ -118,7 +118,7 @@ RSpec.describe 'api/v1/permissions', type: :request do
         perm = @stamp.permissions.find { |p| p.id.to_s==data[:id] }
         expect(perm).not_to be_nil
         expect(perm.permitted).to eq('jeff')
-        expect(perm.permission_type.to_sym).to eq(:spend)
+        expect(perm.permission_type.to_sym).to eq(:consume)
         expect(perm.accessible).to eq(@stamp)
       end
 
@@ -169,7 +169,7 @@ RSpec.describe 'api/v1/permissions', type: :request do
     let(:owner) { user }
 
     it 'does not succeed' do
-      putdata = { id: perm_id, type: 'permissions', attributes: { 'permission-type': :write, permitted: 'jeff', 'accessible-id': @stamp.id }}
+      putdata = { id: perm_id, type: 'permissions', attributes: { 'permission-type': :edit, permitted: 'jeff', 'accessible-id': @stamp.id }}
       expect { put api_v1_permission_path(perm_id), params: { data: putdata }.to_json, headers: headers }.to raise_error(ActionController::RoutingError)
       expect(@stamp.permissions.first.reload.permitted).to eq('pirates')
     end
@@ -180,7 +180,7 @@ RSpec.describe 'api/v1/permissions', type: :request do
     let(:owner) { user }
 
     it 'does not succeed' do
-      patchdata = { id: perm_id, type: 'permissions', attributes: { 'permission-type': :write, permitted: 'jeff' }}
+      patchdata = { id: perm_id, type: 'permissions', attributes: { 'permission-type': :edit, permitted: 'jeff' }}
       expect { patch api_v1_permission_path(perm_id), params: { data: patchdata }.to_json, headers: headers }.to raise_error(ActionController::RoutingError)
       expect(@stamp.permissions.first.reload.permitted).to eq('pirates')
     end

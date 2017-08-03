@@ -35,7 +35,7 @@ RSpec.describe 'api/v1/materials', type: :request do
   before do
     @stamps = create_list(:stamp, 2, owner_id: owner)
     @stamp = @stamps.first
-    @stamp.permissions.create!(permission_type: :spend, permitted: 'pirates')
+    @stamp.permissions.create!(permission_type: :consume, permitted: 'pirates')
     @mat = create(:stamp_material, stamp: @stamp)
 
     request_data = { owner_id: user, materials: [mat_uuid] }

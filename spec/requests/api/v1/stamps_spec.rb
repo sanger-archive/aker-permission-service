@@ -31,7 +31,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
   before do
     @stamps = create_list(:stamp, 3, owner_id: owner)
     @stamp = @stamps.first
-    @stamp.permissions.create!(permission_type: :spend, permitted: 'pirates')
+    @stamp.permissions.create!(permission_type: :consume, permitted: 'pirates')
     create(:stamp_material, stamp: @stamp)
     @stamps[2].deactivate!
     @active_stamps = @stamps[0,2]
@@ -421,9 +421,9 @@ RSpec.describe 'api/v1/stamps', type: :request do
   describe 'POST #set_permissions' do
     let(:permission_data) do
       [
-        { 'permission-type': :spend, permitted: 'jeff' },
-        { 'permission-type': :write, permitted: 'jeff' },
-        { 'permission-type': :spend, permitted: 'dirk' },
+        { 'permission-type': :consume, permitted: 'jeff' },
+        { 'permission-type': :edit, permitted: 'jeff' },
+        { 'permission-type': :consume, permitted: 'dirk' },
       ]
     end
 
@@ -461,7 +461,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
         it { expect(response).to have_http_status(:gone) }
 
         it 'should not update the stamp permissions' do
-          expect(permission_results).to match_array([{'permission-type': :spend, permitted: 'pirates'}])
+          expect(permission_results).to match_array([{'permission-type': :consume, permitted: 'pirates'}])
         end
       end
     end
@@ -471,7 +471,7 @@ RSpec.describe 'api/v1/stamps', type: :request do
       it { expect(response).to have_http_status(:forbidden) }
 
       it 'should not update the stamp permissions' do
-        expect(permission_results).to match_array([{'permission-type': :spend, permitted: 'pirates'}])
+        expect(permission_results).to match_array([{'permission-type': :consume, permitted: 'pirates'}])
       end
 
     end

@@ -10,10 +10,10 @@ RSpec.describe PermissionChecker do
 
   describe '#check' do
     before do
-      @stamp1 = make_stamp('jeff', :write)
-      @stamp2 = make_stamp('beta', :write)
+      @stamp1 = make_stamp('jeff', :edit)
+      @stamp2 = make_stamp('beta', :edit)
       @stamp3 = make_stamp('jeff', :read)
-      @stamp4 = make_stamp('dirk', :write)
+      @stamp4 = make_stamp('dirk', :edit)
 
       @permitted_uuids = [@stamp1.stamp_materials.first.material_uuid, @stamp2.stamp_materials.first.material_uuid]
       @unpermitted_uuids = [@stamp3.stamp_materials.first.material_uuid, @stamp4.stamp_materials.first.material_uuid, SecureRandom.uuid]
@@ -22,22 +22,22 @@ RSpec.describe PermissionChecker do
 
     context 'when the materials are not all permitted' do
       it 'should return false' do
-        expect(PermissionChecker.check(:write, ['alpha', 'beta', 'jeff'], @material_uuids)).to eq(false)
+        expect(PermissionChecker.check(:edit, ['alpha', 'beta', 'jeff'], @material_uuids)).to eq(false)
       end
 
       it 'should put the unpermitted materials into the unpermitted_uuids attribute' do
-        PermissionChecker.check(:write, ['alpha', 'beta', 'jeff'], @material_uuids)
+        PermissionChecker.check(:edit, ['alpha', 'beta', 'jeff'], @material_uuids)
         expect(PermissionChecker.unpermitted_uuids).to eq(@unpermitted_uuids)
       end
     end
 
     context 'when the materials are all permitted' do
       it 'should return false' do
-        expect(PermissionChecker.check(:write, ['alpha', 'beta', 'jeff'], @permitted_uuids)).to eq(true)
+        expect(PermissionChecker.check(:edit, ['alpha', 'beta', 'jeff'], @permitted_uuids)).to eq(true)
       end
 
       it 'should have an empty unpermitted_uuids attribute' do
-        PermissionChecker.check(:write, ['alpha', 'beta', 'jeff'], @permitted_uuids)
+        PermissionChecker.check(:edit, ['alpha', 'beta', 'jeff'], @permitted_uuids)
         expect(PermissionChecker.unpermitted_uuids).to be_empty
       end
     end
@@ -50,11 +50,11 @@ RSpec.describe PermissionChecker do
       end
 
       it 'should return false' do
-        expect(PermissionChecker.check(:write, ['alpha', 'beta', 'jeff'], @material_uuids)).to eq(false)
+        expect(PermissionChecker.check(:edit, ['alpha', 'beta', 'jeff'], @material_uuids)).to eq(false)
       end
 
       it 'should put the unpermitted materials into the unpermitted_uuids attribute' do
-        PermissionChecker.check(:write, ['alpha', 'beta', 'jeff'], @material_uuids)
+        PermissionChecker.check(:edit, ['alpha', 'beta', 'jeff'], @material_uuids)
         expect(PermissionChecker.unpermitted_uuids).to eq(@unpermitted_uuids)
       end
     end

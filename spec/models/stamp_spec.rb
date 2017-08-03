@@ -20,7 +20,7 @@ RSpec.describe Stamp, type: :model do
   describe '#destroy' do
     before do
       @stamp = create(:stamp)
-      @perm = @stamp.permissions.create(permission_type: :spend, permitted: 'jeff')
+      @perm = @stamp.permissions.create(permission_type: :consume, permitted: 'jeff')
       @mat = create(:stamp_material, stamp: @stamp)
 
       @stamp.destroy!
