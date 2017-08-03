@@ -473,5 +473,45 @@ RSpec.describe 'api/v1/stamps', type: :request do
     end
   end
 
+  describe 'filtering' do
+    context 'When filtering owner email' do
+      let!(:jeff) { "jeff@here.com" }
+      let!(:dirk) { "dirk@here.com" }
+
+      let!(:stamps) do
+        [
+          create(:stamp, name: 'stamp1', owner_id: jeff),
+          create(:stamp, name: 'stamp2', owner_id: dirk),
+          create(:stamp, name: 'stamp3', owner_id: jeff),
+        ]
+      end
+
+      context 'When a known owner is specified' do
+
+        it 'returns the stamps with the given owner' do
+          get api_v1_stamps_path, params: { "filter[owner_id]" => jeff }, headers: {
+            "Content-Type": "application/vnd.api+json",
+            "Accept": "application/vnd.api+json",
+          }
+          @body = JSON.parse(response.body, symbolize_names: true)
+          expect(@body[:data].length).to eq 2
+        end
+
+      end
+
+      context 'When an unknown owner is specified' do
+
+        it 'returns no stamps' do
+          get api_v1_stamps_path, params: { "filter[owner_id]" => 'bananas' }, headers: {
+            "Content-Type": "application/vnd.api+json",
+            "Accept": "application/vnd.api+json",
+          }
+          @body = JSON.parse(response.body, symbolize_names: true)
+          expect(@body[:data].length).to eq 0
+        end
+      end
+    end
+  end
+
 end
 
