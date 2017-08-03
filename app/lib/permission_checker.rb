@@ -1,5 +1,3 @@
-require 'set'
-
 class PermissionChecker
 
   class << self
@@ -8,9 +6,9 @@ class PermissionChecker
     def check(permission_type, names, material_uuids)
       material_uuids = material_uuids.uniq
       @unpermitted_uuids = []
-      permitted_uuids = Set.new(select_permitted_material_uuids(permission_type, names, material_uuids))
+      permitted_uuids = select_permitted_material_uuids(permission_type, names, material_uuids)
 
-      @unpermitted_uuids = material_uuids.reject { |mu| permitted_uuids.include?(mu) }
+      @unpermitted_uuids = material_uuids - permitted_uuids
       return @unpermitted_uuids.empty?
     end
 
