@@ -6,12 +6,12 @@ RSpec.describe Api::V1::PermissionsController, type: :controller do
       stamp = create(:stamp)
       sm = create(:stamp_material, stamp: stamp)
       @material_uuid = sm.material_uuid
-      stamp.permissions.create!(permission_type: :spend, permitted: 'mygroup')
+      stamp.permissions.create!(permission_type: :consume, permitted: 'mygroup')
     end
 
     context 'when the materials are permitted' do
       before do
-        post :check, params: { data: { permission_type: :spend, names: ['dirk', 'mygroup'], material_uuids: [@material_uuid] }  }
+        post :check, params: { data: { permission_type: :consume, names: ['dirk', 'mygroup'], material_uuids: [@material_uuid] }  }
       end
       it 'responds OK' do
         expect(response).to have_http_status(:ok)
@@ -21,7 +21,7 @@ RSpec.describe Api::V1::PermissionsController, type: :controller do
     context 'when some materials are not permitted' do
       before do
         @bad_uuid = SecureRandom.uuid
-        post :check, params: { data: { permission_type: :spend, names: ['dirk', 'mygroup'], material_uuids: [@material_uuid, @bad_uuid] }  }
+        post :check, params: { data: { permission_type: :consume, names: ['dirk', 'mygroup'], material_uuids: [@material_uuid, @bad_uuid] }  }
       end
       it 'responds forbidden' do
         expect(response).to have_http_status(:forbidden)

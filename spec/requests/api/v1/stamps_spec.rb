@@ -29,10 +29,12 @@ RSpec.describe 'api/v1/stamps', type: :request do
   let(:errors) { body[:errors] }
 
   before do
-    @stamps = create_list(:stamp, 2, owner_id: owner)
+    @stamps = create_list(:stamp, 3, owner_id: owner)
     @stamp = @stamps.first
-    @stamp.permissions.create!(permission_type: :spend, permitted: 'pirates')
+    @stamp.permissions.create!(permission_type: :consume, permitted: 'pirates')
     create(:stamp_material, stamp: @stamp)
+    @stamps[2].deactivate!
+    @active_stamps = @stamps[0,2]
   end
 
   describe 'GET #index' do
@@ -42,32 +44,42 @@ RSpec.describe 'api/v1/stamps', type: :request do
 
     it { expect(response).to have_http_status(:ok) }
 
-    it 'should contain the correct number of stamps' do
-      expect(data.length).to eq(@stamps.length)
+    it 'should contain the correct number of active stamps' do
+      expect(data.length).to eq(@active_stamps.length)
     end
 
-    it 'should have the correct stamp ids' do
-      expect(data.pluck(:id)).to match_array(@stamps.map(&:id))
+    it 'should have the correct active stamp ids' do
+      expect(data.pluck(:id)).to match_array(@active_stamps.map(&:id))
     end
   end
 
   describe 'GET #show' do
-    before do
-      get api_v1_stamp_path(@stamp.id), headers: headers
-    end
+    context 'when the stamp is active' do
+      before do
+        get api_v1_stamp_path(@stamp.id), headers: headers
+      end
 
-    it { expect(response).to have_http_status(:ok) }
+      it { expect(response).to have_http_status(:ok) }
 
-    it 'has the stamp id' do
-      expect(data[:id]).to eq(@stamp.id)
+      it 'has the stamp id' do
+        expect(data[:id]).to eq(@stamp.id)
+      end
+      it 'has the correct attributes' do
+        expect(data[:attributes][:name]).to eq(@stamp.name)
+        expect(data[:attributes][:"owner-id"]).to eq(@stamp.owner_id)
+      end
+      it 'has the correct relationships' do
+        expect(data[:relationships].length).to eq(2)
+        expect(data[:relationships].keys).to match_array([:materials, :permissions])
+      end
     end
-    it 'has the correct attributes' do
-      expect(data[:attributes][:name]).to eq(@stamp.name)
-      expect(data[:attributes][:"owner-id"]).to eq(@stamp.owner_id)
-    end
-    it 'has the correct relationships' do
-      expect(data[:relationships].length).to eq(2)
-      expect(data[:relationships].keys).to match_array([:materials, :permissions])
+    context 'when the stamp is not active' do
+      before do
+        @stamp.deactivate!
+        get api_v1_stamp_path(@stamp.id), headers: headers
+      end
+
+      it { expect(response).to have_http_status(:gone) }
     end
   end
 
@@ -156,6 +168,21 @@ RSpec.describe 'api/v1/stamps', type: :request do
         end
       end
 
+      context 'when the stamp is deactivated' do
+        before do
+          @name = @stamp.name
+          data = { id: @stamp.id, type: 'stamps', attributes: { name: "meringue" } }
+          @stamp.deactivate!
+          put api_v1_stamp_path(@stamp.id), params: { data: data }.to_json, headers: headers
+        end
+
+        it { expect(response).to have_http_status(:gone) }
+
+        it 'does not alter the stamp' do
+          expect(@stamp.name).to eq(@name)
+        end
+      end
+
       context 'when a new owner is specified' do
         before do
           data = { id: @stamp.id, type: 'stamps', attributes: { name: "meringue", 'owner-id': 'jeff' } }
@@ -215,6 +242,21 @@ RSpec.describe 'api/v1/stamps', type: :request do
         end
       end
 
+      context 'when the stamp is deactivated' do
+        before do
+          @name = @stamp.name
+          data = { id: @stamp.id, type: 'stamps', attributes: { name: "meringue" } }
+          @stamp.deactivate!
+          patch api_v1_stamp_path(@stamp.id), params: { data: data }.to_json, headers: headers
+        end
+
+        it { expect(response).to have_http_status(:gone) }
+
+        it 'does not alter the stamp' do
+          expect(@stamp.name).to eq(@name)
+        end
+      end
+
       context 'when a new owner is specified' do
         before do
           data = { id: @stamp.id, type: 'stamps', attributes: { name: "meringue", 'owner-id': 'jeff' } }
@@ -226,6 +268,21 @@ RSpec.describe 'api/v1/stamps', type: :request do
         it 'contains an appropriate error' do
           expect(errors).not_to be_empty
           expect(errors.first[:detail]).to match(/owner[_-]id/)
+        end
+      end
+
+      context 'when the stamp is deactivated' do
+        before do
+          @name = @stamp.name
+          @stamp.deactivate!
+          data = { id: @stamp.id, type: 'stamps', attributes: { name: "meringue" } }
+          patch api_v1_stamp_path(@stamp.id), params: { data: data }.to_json, headers: headers
+        end
+
+        it { expect(response).to have_http_status(:gone) }
+
+        it 'does not update the stamp' do
+          expect(@stamp.reload.name).to eq @name
         end
       end
 
@@ -246,19 +303,35 @@ RSpec.describe 'api/v1/stamps', type: :request do
     end
   end
 
-  describe 'DELETE #destroy' do
+  describe 'DELETE #remove' do
     context 'when I own the stamp' do
       let(:owner) { user }
 
-      before do
-        @stamp_id = @stamps.second.id
-        delete api_v1_stamp_path(@stamp_id), headers: headers
+      context 'when the stamp is active' do
+        before do
+          @stamp_id = @stamps.second.id
+          delete api_v1_stamp_path(@stamp_id), headers: headers
+        end
+
+        it { expect(response).to have_http_status(:no_content) }
+
+        it 'deactivates the model' do
+          expect(Stamp.where(id: @stamp_id).first).to be_deactivated
+        end
       end
 
-      it { expect(response).to have_http_status(:no_content) }
+      context 'when the stamp is already deactivated' do
+        before do
+          @stamps.second.deactivate!
+          @stamp_id = @stamps.second.id
+          delete api_v1_stamp_path(@stamp_id), headers: headers
+        end
 
-      it 'deletes the model' do
-        expect(Stamp.where(id: @stamp_id).first).to be_nil
+        it { expect(response).to have_http_status(:gone) }
+
+        it 'is still deactivated' do
+          expect(Stamp.where(id: @stamp_id).first).to be_deactivated
+        end
       end
     end
 
@@ -270,8 +343,8 @@ RSpec.describe 'api/v1/stamps', type: :request do
 
       it { expect(response).to have_http_status(:forbidden) }
 
-      it 'does not delete the model' do
-        expect(Stamp.where(id: @stamp_id).first).not_to be_nil
+      it 'does not deactivate the model' do
+        expect(Stamp.where(id: @stamp_id).first).to be_active
       end
     end
 
@@ -286,16 +359,8 @@ RSpec.describe 'api/v1/stamps', type: :request do
 
       it { expect(response).to have_http_status(:no_content) }
 
-      it 'deletes the model' do
-        expect(Stamp.where(id: @stamp.id).first).to be_nil
-      end
-
-      it 'deletes the associated permissions' do
-        expect(AkerPermissionGem::Permission.where(id: @perm_id).first).to be_nil
-      end
-
-      it 'deletes the associated materials' do
-        expect(StampMaterial.where(id: @mat_id).first).to be_nil
+      it 'deactivates the model' do
+        expect(Stamp.where(id: @stamp.id).first).to be_deactivated
       end
     end
   end
@@ -356,11 +421,13 @@ RSpec.describe 'api/v1/stamps', type: :request do
   describe 'POST #set_permissions' do
     let(:permission_data) do
       [
-        { 'permission-type': :spend, permitted: 'jeff' },
-        { 'permission-type': :write, permitted: 'jeff' },
-        { 'permission-type': :spend, permitted: 'dirk' },
+        { 'permission-type': :consume, permitted: 'jeff' },
+        { 'permission-type': :edit, permitted: 'jeff' },
+        { 'permission-type': :consume, permitted: 'dirk' },
       ]
     end
+
+    let(:deactivate) { false }
 
     def permission_results
       @stamp.reload.permissions.map do |p|
@@ -372,6 +439,9 @@ RSpec.describe 'api/v1/stamps', type: :request do
     end
 
     before do
+      if deactivate
+        @stamp.deactivate!
+      end
       post api_v1_stamp_set_permissions_path(@stamp.id), params: { data: permission_data }.to_json, headers: headers
     end
 
@@ -383,6 +453,17 @@ RSpec.describe 'api/v1/stamps', type: :request do
       it 'should update the stamp permissions' do
         expect(permission_results).to match_array(permission_data)
       end
+
+
+      context 'when the stamp is deactivatd' do
+        let(:deactivate) { true }
+        
+        it { expect(response).to have_http_status(:gone) }
+
+        it 'should not update the stamp permissions' do
+          expect(permission_results).to match_array([{'permission-type': :consume, permitted: 'pirates'}])
+        end
+      end
     end
 
     context 'when I do not own the stamp' do
@@ -390,16 +471,18 @@ RSpec.describe 'api/v1/stamps', type: :request do
       it { expect(response).to have_http_status(:forbidden) }
 
       it 'should not update the stamp permissions' do
-        expect(permission_results).to match_array([{'permission-type': :spend, permitted: 'pirates'}])
+        expect(permission_results).to match_array([{'permission-type': :consume, permitted: 'pirates'}])
       end
 
     end
+
 
   end
 
   describe 'POST #apply' do
     let(:post_materials) { [SecureRandom.uuid] }
     let(:postdata) { { data: { materials: post_materials } } }
+    let(:deactivate) { false }
 
     before do
       request_data = { owner_id: user, materials: post_materials }
@@ -407,6 +490,9 @@ RSpec.describe 'api/v1/stamps', type: :request do
         with(body: request_data.to_json).
         to_return(status: ownership_status)
       @init_materials = @stamp.stamp_materials.map(&:material_uuid)
+      if deactivate
+        @stamp.deactivate!
+      end
       post api_v1_stamp_apply_path(@stamp.id), params: postdata.to_json, headers: headers
     end
 
@@ -419,6 +505,16 @@ RSpec.describe 'api/v1/stamps', type: :request do
 
       it 'should stamp the materials' do
         expect(result_materials).to match_array(@init_materials+post_materials)
+      end
+
+      context 'when the stamp is deactivated' do
+        let(:deactivate) { true }
+
+        it { expect(response).to have_http_status(:gone) }
+
+        it 'should not stamp the materials' do
+          expect(result_materials).to match_array(@init_materials)
+        end
       end
     end
 
@@ -434,6 +530,8 @@ RSpec.describe 'api/v1/stamps', type: :request do
   end
 
   describe 'POST #unapply' do
+    let(:deactivate) { false }
+
     before do
       create(:stamp_material, stamp: @stamp)
       @init_materials = result_materials
@@ -445,6 +543,9 @@ RSpec.describe 'api/v1/stamps', type: :request do
         with(body: request_data.to_json).
         to_return(status: ownership_status)
       postdata = { data: { materials: @post_materials } }
+      if deactivate
+        @stamp.deactivate!
+      end
       post api_v1_stamp_unapply_path(@stamp.id), params: postdata.to_json, headers: headers
     end
 
@@ -459,6 +560,16 @@ RSpec.describe 'api/v1/stamps', type: :request do
 
       it 'should unstamp the materials' do
         expect(result_materials).to match_array(@remaining_materials)
+      end
+
+      context 'when the stamp is deactivated' do
+        let(:deactivate) { true }
+
+        it { expect(response).to have_http_status(:gone) }
+
+        it 'should not unstamp the materials' do
+          expect(result_materials).to match_array(@init_materials)
+        end
       end
     end
 
