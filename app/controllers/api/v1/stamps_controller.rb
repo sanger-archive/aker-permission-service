@@ -56,6 +56,14 @@ module Api
         render_apply_response(stamp)
       end
 
+      def deactivate
+        stamp = current_stamp
+        if stamp.deactivated?
+          raise Errors::ResourceGone
+        end
+        stamp.deactivate!
+      end
+
     private
 
       def current_stamp
