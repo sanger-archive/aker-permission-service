@@ -58,6 +58,10 @@ module Api
 
       def destroy
         stamp = Stamp.find(params[:id])
+
+        if context[:current_user].email!=stamp.owner_id
+          raise CanCan::AccessDenied
+        end
         if stamp.deactivated?
           raise Errors::ResourceGone
         end
