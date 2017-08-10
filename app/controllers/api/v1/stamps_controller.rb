@@ -56,6 +56,18 @@ module Api
         render_apply_response(stamp)
       end
 
+      def destroy
+        stamp = Stamp.find(params[:id])
+
+        if context[:current_user].email!=stamp.owner_id
+          raise CanCan::AccessDenied
+        end
+        if stamp.deactivated?
+          raise Errors::ResourceGone
+        end
+        stamp.deactivate!
+      end
+
     private
 
       def current_stamp
