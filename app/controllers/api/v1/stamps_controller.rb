@@ -56,8 +56,8 @@ module Api
         render_apply_response(stamp)
       end
 
-      def deactivate
-        stamp = current_stamp
+      def destroy
+        stamp = Stamp.find(params[:id])
         if stamp.deactivated?
           raise Errors::ResourceGone
         end
