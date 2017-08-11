@@ -6,6 +6,9 @@ module Api
       rescue_from CanCan::AccessDenied do |exception|
         head :forbidden, content_type: 'application/vnd.api+json'
       end
+      rescue_from Errors::ResourceGone do |exception|
+        head :gone, content_type: 'application/vnd.api+json'
+      end
 
     private
 
