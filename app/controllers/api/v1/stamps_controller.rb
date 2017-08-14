@@ -3,9 +3,13 @@ require 'set'
 module Api
   module V1
     class StampsController < ApiController
+      before_action :check_activeness, only: :show
 
       def set_permissions
         stamp = current_stamp
+        if stamp.deactivated?
+          raise Errors::ResourceGone
+        end
         if context[:current_user].email!=stamp.owner_id
           raise CanCan::AccessDenied
         end
@@ -20,6 +24,9 @@ module Api
 
       def apply
         stamp = current_stamp
+        if stamp.deactivated?
+          raise Errors::ResourceGone
+        end
         materials = apply_params
         authorize_materials(materials)
         current_materials_set = Set.new(stamp.stamp_materials.map(&:material_uuid))
@@ -34,6 +41,9 @@ module Api
 
       def unapply
         stamp = current_stamp
+        if stamp.deactivated?
+          raise Errors::ResourceGone
+        end
         materials = apply_params
         authorize_materials(materials)
         current_materials_set = Set.new(stamp.stamp_materials.map(&:material_uuid))
@@ -50,6 +60,12 @@ module Api
 
       def current_stamp
         Stamp.find(params[:stamp_id])
+      end
+
+      def check_activeness
+        if Stamp.where(id: params[:id]).first&.deactivated?
+          raise Errors::ResourceGone
+        end
       end
 
       def authorize_materials(materials)

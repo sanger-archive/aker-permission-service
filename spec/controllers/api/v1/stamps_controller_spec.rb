@@ -23,14 +23,14 @@ RSpec.describe Api::V1::StampsController, type: :controller do
 
     let(:init_permissions) do
       [
-        { permission_type: :spend, permitted: 'alpha' },
-        { permission_type: :write, permitted: 'beta' },
+        { permission_type: :consume, permitted: 'alpha' },
+        { permission_type: :edit, permitted: 'beta' },
       ]
     end
 
     let(:permission_data) do
       [
-        { 'permission-type': :spend, permitted: 'omega' }
+        { 'permission-type': :consume, permitted: 'omega' }
       ]
     end
 
@@ -85,8 +85,8 @@ RSpec.describe Api::V1::StampsController, type: :controller do
 
       it 'does not update the stamp permissions' do
         initial_permissions = [
-          { 'permission-type': :spend, permitted: 'alpha' },
-          { 'permission-type': :write, permitted: 'beta' },
+          { 'permission-type': :consume, permitted: 'alpha' },
+          { 'permission-type': :edit, permitted: 'beta' },
         ]
         expect(result_permissions).to match_array(initial_permissions)
       end

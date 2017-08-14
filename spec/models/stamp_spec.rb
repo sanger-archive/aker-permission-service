@@ -20,7 +20,7 @@ RSpec.describe Stamp, type: :model do
   describe '#destroy' do
     before do
       @stamp = create(:stamp)
-      @perm = @stamp.permissions.create(permission_type: :spend, permitted: 'jeff')
+      @perm = @stamp.permissions.create(permission_type: :consume, permitted: 'jeff')
       @mat = create(:stamp_material, stamp: @stamp)
 
       @stamp.destroy!
@@ -37,5 +37,28 @@ RSpec.describe Stamp, type: :model do
     it 'destroys the stamp materials' do
       expect(StampMaterial.where(id: @mat.id).first).to be_nil
     end
+  end
+
+  describe '#deactivate!' do
+    it 'works' do
+      stamp = create(:stamp)
+      expect(stamp).to be_active
+      expect(stamp).not_to be_deactivated
+      stamp.deactivate!
+      expect(stamp).not_to be_active
+      expect(stamp).to be_deactivated
+    end
+
+    context 'when the stamp is already deactivated' do
+      it 'does not alter the deactivated_at time' do
+        time = DateTime.new(2017, 1, 1)
+        stamp = create(:stamp, deactivated_at: time)
+        expect(stamp).to be_deactivated
+        stamp.deactivate!
+        expect(stamp).to be_deactivated
+        expect(stamp.deactivated_at).to eq(time)
+      end
+    end
+      
   end
 end
