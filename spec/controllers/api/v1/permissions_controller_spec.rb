@@ -1,6 +1,11 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::PermissionsController, type: :controller do
+  before do
+    stub_request(:post, Rails.application.config.material_url+'/materials/search').
+      to_return(status: 200, body: {_items: []}.to_json, headers: { 'Content-Type' => 'application/json' })
+  end
+
   describe '#check' do
     before do
       stamp = create(:stamp)
