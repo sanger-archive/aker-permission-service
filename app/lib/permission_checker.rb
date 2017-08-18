@@ -9,6 +9,7 @@ class PermissionChecker
       permitted_uuids = select_permitted_material_uuids(permission_type, names, material_uuids)
 
       @unpermitted_uuids = material_uuids - permitted_uuids
+      @unpermitted_uuids -= owned_material_uuids(@unpermitted_uuids, names)
       return @unpermitted_uuids.empty?
     end
 
@@ -22,6 +23,13 @@ class PermissionChecker
               permissions: { permitted: names, permission_type: permission_type },
               stamp_materials: { material_uuid: material_uuids }).
         pluck('distinct material_uuid')
+    end
+
+    def owned_material_uuids(material_uuids, names)
+      MatconClient::Material.where(
+        _id: {"$in" => material_uuids},
+        owner_id: {"$in" => names}
+      ).select(:_id).map { |m| m._id }
     end
 
   end
