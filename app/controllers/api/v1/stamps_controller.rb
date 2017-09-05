@@ -27,7 +27,7 @@ module Api
         if stamp.deactivated?
           raise Errors::ResourceGone
         end
-        materials = apply_params
+        materials = get_material_ids_from(params)
         authorize_materials(materials)
         current_materials_set = Set.new(stamp.stamp_materials.map(&:material_uuid))
         materials.reject! { |m| current_materials_set.include?(m) }
@@ -44,7 +44,7 @@ module Api
         if stamp.deactivated?
           raise Errors::ResourceGone
         end
-        materials = apply_params
+        materials = get_material_ids_from(params)
         authorize_materials(materials)
         current_materials_set = Set.new(stamp.stamp_materials.map(&:material_uuid))
         materials.select! { |m| current_materials_set.include?(m) }
@@ -57,6 +57,22 @@ module Api
       end
 
     private
+
+      def applies_to_query?
+        !params[:data][:query].nil?
+      end
+
+      def query_ids_for(query)
+        MatconClient::Material.where(query).result_set.map(&:_id)
+      end
+
+      def get_material_ids_from(params)
+        if applies_to_query?
+          query_ids_for(apply_to_query_params)
+        else
+          apply_params
+        end        
+      end
 
       def current_stamp
         Stamp.find(params[:stamp_id])
@@ -89,6 +105,10 @@ module Api
 
       def apply_params
         params.require(:data).require(:materials)
+      end
+
+      def apply_to_query_params
+        params.require(:data).require(:query)
       end
 
       def render_apply_response(stamp)
