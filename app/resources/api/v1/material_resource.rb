@@ -3,6 +3,7 @@ module Api
     class MaterialResource < JSONAPI::Resource
       model_name 'StampMaterial'
       attributes :material_uuid, :stamp_id
+      filter :material_uuid
       has_one :stamp
 
       def self.creatable_fields(context)
