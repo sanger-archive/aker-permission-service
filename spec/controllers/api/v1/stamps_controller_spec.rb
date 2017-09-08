@@ -110,65 +110,133 @@ RSpec.describe Api::V1::StampsController, type: :controller do
       stamp.reload.stamp_materials.map(&:material_uuid)
     end
 
-    before do
-      if material_authorised
-        allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_return(nil)
-      else
-        allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_raise(MatconClient::Errors::AccessDenied, nil)
+    context 'when the materials are specified by a searching query' do
+
+      before do
+        allow(MatconClient::Material).to receive(:verify_ownership).and_return(nil)
       end
-      post :apply, params: { data: { materials: post_materials }, stamp_id: stamp.id }
+      context 'when the searching query returns no results' do
+        it 'performs the search' do
+          mocked_response = double('response')
+          mocked_result = double('result set')
+
+          allow(mocked_result).to receive(:map).and_return([])
+          allow(mocked_result).to receive(:has_next?).and_return(false)
+          allow(mocked_response).to receive(:result_set).and_return(mocked_result)
+          allow(MatconClient::Material).to receive(:where).with('my query').and_return(mocked_response)
+
+          post :apply, params: { data: { query: 'my query' }, stamp_id: stamp.id }
+
+          expect(MatconClient::Material).to have_received(:where).with('my query')
+        end
+      end
+      context 'when the searching query returns 1 element' do
+        it 'applies the stamp to all the materials of the searching query' do
+          mocked_response = double('response') 
+          mocked_result = double('result set') 
+
+          materials = 1.times.map { double('material', _id: SecureRandom.uuid )}
+          allow(mocked_result).to receive(:map).and_return(materials.map(&:_id))
+          allow(mocked_result).to receive(:has_next?).and_return(false)
+          allow(mocked_response).to receive(:result_set).and_return(mocked_result)
+          allow(MatconClient::Material).to receive(:where).with('my query').and_return(mocked_response)
+
+          post :apply, params: { data: { query: 'my query' }, stamp_id: stamp.id }
+
+          expect(MatconClient::Material).to have_received(:where).with('my query')
+        end                
+      end
+      context 'when the searching query return 2 pages' do
+        it 'applies the stamp to all the materials of the searching query' do
+          mocked_response = double('response') 
+          mocked_result = double('result set') 
+
+          materials = 5.times.map { double('material', _id: SecureRandom.uuid )}
+          materials2 = 4.times.map { double('material', _id: SecureRandom.uuid )}
+          mocked_result2 = double('result set')
+
+          allow(mocked_result).to receive(:map).and_return(materials.map(&:_id))
+          allow(mocked_result).to receive(:has_next?).and_return(true)
+
+          allow(mocked_result2).to receive(:map).and_return(materials2.map(&:_id))
+          allow(mocked_result2).to receive(:has_next?).and_return(false)
+
+          allow(mocked_result).to receive(:next).and_return(mocked_result2)
+
+          allow(mocked_response).to receive(:result_set).and_return(mocked_result)
+          allow(MatconClient::Material).to receive(:where).with('my query').and_return(mocked_response)
+
+          materials_list = [materials, materials2].flatten.map(&:_id)
+          args = [(materials_list.map { |m| { stamp: stamp, material_uuid: m } })].flatten
+
+          allow(StampMaterial).to receive(:create!).with(args)
+          post :apply, params: { data: { query: 'my query' }, stamp_id: stamp.id }
+
+          expect(StampMaterial).to have_received(:create!).with(args)
+        end        
+      end
     end
 
-    context 'when the material is authorised' do
-      let(:material_authorised) { true }
+    context 'when the materials are specified by a list of uuids' do
+      before do
+        if material_authorised
+          allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_return(nil)
+        else
+          allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_raise(MatconClient::Errors::AccessDenied, nil)
+        end
+        post :apply, params: { data: { materials: post_materials }, stamp_id: stamp.id }
+      end
 
-      context 'when the stamp has no materials initially' do
-        let(:init_materials) { [] }
-        it { expect(response).to have_http_status(:ok) }
+      context 'when the material is authorised' do
+        let(:material_authorised) { true }
 
-        it 'links the materials to the stamp' do
-          expect(result_materials).to match_array(post_materials)
+        context 'when the stamp has no materials initially' do
+          let(:init_materials) { [] }
+          it { expect(response).to have_http_status(:ok) }
+
+          it 'links the materials to the stamp' do
+            expect(result_materials).to match_array(post_materials)
+          end
+        end
+
+        context 'when the stamp has materials already' do
+          it { expect(response).to have_http_status(:ok) }
+
+          it 'links the materials to the stamp' do
+            expect(result_materials).to match_array(init_materials + post_materials)
+          end
+        end
+
+        context 'when the init materials and post materials overlap' do
+          it { expect(response).to have_http_status(:ok) }
+
+          let(:init_materials) { [SecureRandom.uuid, post_materials.first] }
+
+          it 'links the materials to the stamp' do
+            expect(result_materials).to match_array(init_materials + post_materials[1, post_materials.length])
+          end
+        end
+
+        context 'when all the post materials are already linked to the stamp' do
+          it { expect(response).to have_http_status(:ok) }
+
+          let(:init_materials) { [SecureRandom.uuid]+post_materials }
+
+          it 'links the materials to the stamp' do
+            expect(result_materials).to match_array(init_materials)
+          end
         end
       end
 
-      context 'when the stamp has materials already' do
-        it { expect(response).to have_http_status(:ok) }
+      context 'when the material is not authorised' do
+        let(:material_authorised) { false }
+        it { expect(response).to have_http_status(:forbidden) }
 
-        it 'links the materials to the stamp' do
-          expect(result_materials).to match_array(init_materials + post_materials)
-        end
-      end
-
-      context 'when the init materials and post materials overlap' do
-        it { expect(response).to have_http_status(:ok) }
-
-        let(:init_materials) { [SecureRandom.uuid, post_materials.first] }
-
-        it 'links the materials to the stamp' do
-          expect(result_materials).to match_array(init_materials + post_materials[1, post_materials.length])
-        end
-      end
-
-      context 'when all the post materials are already linked to the stamp' do
-        it { expect(response).to have_http_status(:ok) }
-
-        let(:init_materials) { [SecureRandom.uuid]+post_materials }
-
-        it 'links the materials to the stamp' do
+        it 'does not change the materials for the stamp' do
           expect(result_materials).to match_array(init_materials)
         end
       end
     end
-
-    context 'when the material is not authorised' do
-      let(:material_authorised) { false }
-      it { expect(response).to have_http_status(:forbidden) }
-
-      it 'does not change the materials for the stamp' do
-        expect(result_materials).to match_array(init_materials)
-      end
-    end
-
   end
 
   describe '#unapply' do

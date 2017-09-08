@@ -63,7 +63,13 @@ module Api
       end
 
       def query_ids_for(query)
-        MatconClient::Material.where(query).result_set.map(&:_id)
+        result = MatconClient::Material.where(query).result_set
+        ids = result.map(&:_id)
+        while result.has_next? do
+          result = result.next
+          ids = ids.concat(result.map(&:_id))
+        end
+        ids
       end
 
       def get_material_ids_from(params)
