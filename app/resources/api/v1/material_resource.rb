@@ -6,6 +6,14 @@ module Api
       filter :material_uuid
       has_one :stamp
 
+      filter :permitted, apply: -> (records, value, _options) {
+        records.joins(:stamp => :permissions).where(stamp: { permissions: { permitted: value}})
+      }
+
+      filter :permission_type, apply: -> (records, value, _options) {
+        records.joins(:stamp => :permissions).where(stamp: { permissions: { permission_type: value}})
+      }      
+
       def self.creatable_fields(context)
         [:material_uuid, :stamp_id]
       end
