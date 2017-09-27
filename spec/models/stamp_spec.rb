@@ -15,6 +15,12 @@ RSpec.describe Stamp, type: :model do
     it 'is not valid without an owner_id' do
       expect(build(:stamp, owner_id: nil)).not_to be_valid
     end
+
+    it 'is valid with a name unique to only active stamps' do
+      stamp = create(:stamp)
+      stamp.destroy!
+      expect(build(:stamp, name: stamp.name)).to be_valid
+    end
   end
 
   describe '#destroy' do
@@ -59,6 +65,6 @@ RSpec.describe Stamp, type: :model do
         expect(stamp.deactivated_at).to eq(time)
       end
     end
-      
+
   end
 end
