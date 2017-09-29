@@ -7,20 +7,27 @@ RSpec.describe Stamp, type: :model do
       expect(build(:stamp, name: nil)).not_to be_valid
     end
 
-    it 'is not valid without a unique name' do
-      stamp = create(:stamp)
-      expect(build(:stamp, name: stamp.name)).not_to be_valid
-    end
-
     it 'is not valid without an owner_id' do
       expect(build(:stamp, owner_id: nil)).not_to be_valid
     end
 
-    it 'is valid with a name unique to only active stamps' do
+    it 'is not valid with a duplicate name within the scope of active stamps' do
       stamp = create(:stamp)
-      stamp.destroy!
+      expect(build(:stamp, name: stamp.name)).not_to be_valid
+    end
+
+    it 'is valid with a name unique within the scope of active stamps' do
+      stamp = create(:stamp)
+      stamp.deactivate!
       expect(build(:stamp, name: stamp.name)).to be_valid
     end
+
+    it 'is valid with a name unique within the scope of active stamps' do
+      stamp = create(:stamp)
+      stamp1 = create(:stamp)
+      expect(stamp1.update_attributes(name: stamp.name)).to eq false
+    end
+
   end
 
   describe '#destroy' do

@@ -24,7 +24,7 @@ class Stamp < ApplicationRecord
 
   # Name must be unique within the scope of active stamps
   def validate_name_active_uniqueness
-    if Stamp.where(name: name, deactivated_at: nil).any? { |s| s.id != id }
+    if Stamp.where("name = ? AND deactivated_at is NULL", name).exists?
       errors.add(:name, "must be unique")
     end
   end
