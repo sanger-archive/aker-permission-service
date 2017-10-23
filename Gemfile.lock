@@ -1,8 +1,10 @@
 GIT
   remote: https://github.com/sanger/aker-credentials.git
-  revision: d6a7bfbe1dd7175f8eb5a41dec78a672451dcef7
+  revision: 49a8a0a2811878744d2d6869784b3bdb885804a4
   specs:
-    aker_credentials_gem (0.1.1)
+    aker_credentials_gem (0.2.4)
+      activesupport
+      faraday
       jwt
       request_store
 
@@ -113,7 +115,7 @@ GEM
       railties (>= 4.1)
     jsonapi-resources-matchers (1.0.0)
       jsonapi-resources (>= 0.9.0)
-    jwt (1.5.6)
+    jwt (2.1.0)
     listen (3.0.8)
       rb-fsevent (~> 0.9, >= 0.9.4)
       rb-inotify (~> 0.9, >= 0.9.7)
@@ -271,4 +273,4 @@ DEPENDENCIES
   zipkin-tracer
 
 BUNDLED WITH
-   1.15.3
+   1.15.4

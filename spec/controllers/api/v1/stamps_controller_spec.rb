@@ -5,12 +5,14 @@ RSpec.describe Api::V1::StampsController, type: :controller do
   let(:vnd) { 'application/vnd.api+json' }
   let(:user) { 'me@here.com' }
   let(:owner) { user }
+  let(:jwt) { JWT.encode({ data: { 'email' => user, 'groups' => ['world'] } }, Rails.configuration.jwt_secret_key, 'HS256') }
 
   let(:current_user) do
     OpenStruct.new(email: user, groups: ['world'])
   end
 
   before do
+    request.headers["HTTP_X_AUTHORISATION"] = jwt
     allow_any_instance_of(Api::V1::StampsController).to receive(:current_user).and_return(current_user)
   end
 
