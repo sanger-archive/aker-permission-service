@@ -2,6 +2,11 @@ require 'rails_helper'
 
 RSpec.describe Api::V1::PermissionsController, type: :controller do
   before do
+    email = "user@here.com"
+    @jwt = JWT.encode({ data: { 'email' => email, 'groups' => ['world'] } }, Rails.configuration.jwt_secret_key, 'HS256')
+    
+    request.headers["HTTP_X_AUTHORISATION"] = @jwt
+
     stub_request(:post, Rails.application.config.material_url+'/materials/search').
       to_return(status: 200, body: {_items: []}.to_json, headers: { 'Content-Type' => 'application/json' })
   end
@@ -16,7 +21,10 @@ RSpec.describe Api::V1::PermissionsController, type: :controller do
 
     context 'when the materials are permitted' do
       before do
-        post :check, params: { data: { permission_type: :consume, names: ['dirk', 'mygroup'], material_uuids: [@material_uuid] }  }
+        post :check, params: { data: { 
+          permission_type: :consume, names: ['dirk', 'mygroup'], 
+          material_uuids: [@material_uuid] }}
+        
       end
       it 'responds OK' do
         expect(response).to have_http_status(:ok)
@@ -26,7 +34,9 @@ RSpec.describe Api::V1::PermissionsController, type: :controller do
     context 'when some materials are not permitted' do
       before do
         @bad_uuid = SecureRandom.uuid
-        post :check, params: { data: { permission_type: :consume, names: ['dirk', 'mygroup'], material_uuids: [@material_uuid, @bad_uuid] }  }
+        post :check, params: { data: { 
+          permission_type: :consume, names: ['dirk', 'mygroup'],
+          material_uuids: [@material_uuid, @bad_uuid] }}
       end
       it 'responds forbidden' do
         expect(response).to have_http_status(:forbidden)
