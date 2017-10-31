@@ -5,8 +5,12 @@ Rails.application.config.after_initialize do
     ENV['HTTP_PROXY'] = nil
     ENV['http_proxy'] = nil
     ENV['https_proxy'] = nil
-    connection.faraday.proxy ''
+
+    # Remove deprecation warning by setting empty hash
+    # http://www.rubydoc.info/github/lostisland/faraday/Faraday/Connection
+    connection.faraday.proxy {}
     connection.use JWTSerializer
+
     if Rails.env.production? || Rails.env.staging?
       connection.use ZipkinTracer::FaradayHandler, 'Materials service'
     end
