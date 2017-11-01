@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20171031121314) do
+ActiveRecord::Schema.define(version: 20171031165540) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -22,6 +22,7 @@ ActiveRecord::Schema.define(version: 20171031121314) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["deputy"], name: "index_deputies_on_deputy", using: :btree
+    t.index ["user_email", "deputy"], name: "index_deputies_on_user_email_and_deputy", unique: true, using: :btree
   end
 
   create_table "permissions", force: :cascade do |t|
