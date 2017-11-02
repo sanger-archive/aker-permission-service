@@ -116,6 +116,7 @@ RSpec.describe Api::V1::StampsController, type: :controller do
       if material_authorised
         allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_return(nil)
       else
+        Api::V1::StampsController.any_instance.stub(:check_deputy).and_return(false)
         allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_raise(MatconClient::Errors::AccessDenied, nil)
       end
       post :apply, params: { data: { materials: post_materials }, stamp_id: stamp.id }
@@ -193,6 +194,7 @@ RSpec.describe Api::V1::StampsController, type: :controller do
       if material_authorised
         allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_return(nil)
       else
+        Api::V1::StampsController.any_instance.stub(:check_deputy).and_return(false)
         allow(MatconClient::Material).to receive(:verify_ownership).with(user, post_materials).and_raise(MatconClient::Errors::AccessDenied, nil)
       end
       post :unapply, params: { data: { materials: post_materials }, stamp_id: stamp.id }
