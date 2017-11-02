@@ -19,6 +19,7 @@ module Api
 
       def remove
         authorize!
+        @model.delete
         :completed
       end
 
