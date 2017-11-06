@@ -4,6 +4,7 @@ module Api
   module V1
     class StampsController < ApiController
       before_action :check_activeness, only: :show
+      skip_credentials only: [:show, :index]
 
       def set_permissions
         stamp = current_stamp
@@ -71,7 +72,7 @@ module Api
           query_ids_for(apply_to_query_params)
         else
           apply_params
-        end        
+        end
       end
 
       def current_stamp
@@ -89,8 +90,23 @@ module Api
         begin
           MatconClient::Material.verify_ownership(user_id, materials)
         rescue MatconClient::Errors::ApiError
-          raise CanCan::AccessDenied
+          # User isn't an owner of all materials, but may be a deputy
+          if check_deputy(user_id, materials)
+            true
+          else
+            raise CanCan::AccessDenied
+          end
         end
+      end
+
+      def check_deputy(user_id, materials)
+        user_acts_as = Deputy.where(deputy: user_id).pluck(:user_email)
+        materials.each do |material|
+          if !user_acts_as.include?(MatconClient::Material.find(material).owner_id)
+            return false
+          end
+        end
+        return true
       end
 
       def set_permissions_params

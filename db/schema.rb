@@ -10,11 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170926153200) do
+ActiveRecord::Schema.define(version: 20171031165540) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "uuid-ossp"
+
+  create_table "deputies", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
+    t.string   "user_email"
+    t.string   "deputy"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deputy"], name: "index_deputies_on_deputy", using: :btree
+    t.index ["user_email", "deputy"], name: "index_deputies_on_user_email_and_deputy", unique: true, using: :btree
+  end
 
   create_table "permissions", force: :cascade do |t|
     t.string   "permitted",       null: false
