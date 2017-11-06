@@ -58,6 +58,15 @@ group :development do
   gem 'spring-watcher-listen', '~> 2.0.0'
 end
 
+group :test do
+  # Code coverage for Ruby 1.9+ with a powerful configuration library and automatic merging of
+  # coverage across test suites - https://github.com/colszowka/simplecov
+  gem 'simplecov', require: false
+  # SimpleCov formatter to generate a simple index.html Rcov style
+  # https://github.com/fguillen/simplecov-rcov
+  gem 'simplecov-rcov'
+end
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platform: :mri
