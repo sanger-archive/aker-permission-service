@@ -4,6 +4,7 @@ module Api
   module V1
     class StampsController < ApiController
       before_action :check_activeness, only: :show
+      skip_credentials only: [:show, :index]
 
       def set_permissions
         stamp = current_stamp

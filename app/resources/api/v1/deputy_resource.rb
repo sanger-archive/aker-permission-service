@@ -11,9 +11,9 @@ module Api
         [:user_email, :deputy]
       end
 
-      # before_create do
-      #   @model.user_email = context[:current_user].email
-      # end
+      before_create do
+        @model.user_email = context[:current_user].email
+      end
 
       before_update :authorize!
 
