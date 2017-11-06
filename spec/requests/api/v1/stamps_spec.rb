@@ -493,6 +493,11 @@ RSpec.describe 'api/v1/stamps', type: :request do
       if deactivate
         @stamp.deactivate!
       end
+
+      if ownership_status == 403
+        Api::V1::StampsController.any_instance.stub(:check_deputy).and_return(false)
+      end
+
       post api_v1_stamp_apply_path(@stamp.id), params: postdata.to_json, headers: headers
     end
 
@@ -546,6 +551,11 @@ RSpec.describe 'api/v1/stamps', type: :request do
       if deactivate
         @stamp.deactivate!
       end
+
+      if ownership_status == 403
+        Api::V1::StampsController.any_instance.stub(:check_deputy).and_return(false)
+      end
+
       post api_v1_stamp_unapply_path(@stamp.id), params: postdata.to_json, headers: headers
     end
 

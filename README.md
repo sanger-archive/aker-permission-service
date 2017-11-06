@@ -1,4 +1,4 @@
-# Aker Stamps
+# Aker - Stamps Serivce
 
 A microservice for managing the permissions of materials at Sanger. This is done through Stamps.
 

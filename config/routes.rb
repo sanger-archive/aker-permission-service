@@ -7,6 +7,7 @@ Rails.application.routes.draw do
         post :apply
         post :unapply
       end
+      jsonapi_resources :deputies
       jsonapi_resources :permissions, only: [ :create, :show, :index, :destroy ] do
         jsonapi_relationships only: [ :show, :get_related_resource ]
       end

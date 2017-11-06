@@ -1,6 +1,6 @@
 require 'securerandom'
 
-FactoryGirl.define do
+FactoryBot.define do
   factory :stamp_material do
     sequence(:material_uuid) { SecureRandom.uuid }
     stamp
