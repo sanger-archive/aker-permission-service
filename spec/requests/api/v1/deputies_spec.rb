@@ -72,7 +72,7 @@ RSpec.describe 'api/v1/deputies', type: :request do
       it { expect(response).to have_http_status(:no_content) }
 
       it 'removes the deputy record' do
-        expect { Deputy.find(deputy_to_delete) }.to raise_exception(ActiveRecord::RecordNotFound)
+        expect { Deputy.find(deputy_to_delete.id) }.to raise_exception(ActiveRecord::RecordNotFound)
       end
     end
 
@@ -86,7 +86,7 @@ RSpec.describe 'api/v1/deputies', type: :request do
       it { expect(response).to have_http_status(:forbidden) }
 
       it 'does not remove the deputy record' do
-        expect { Deputy.find(boss_as_deputy.id) }.to_not raise_exception(ActiveRecord::RecordNotFound)
+        expect(Deputy.find(boss_as_deputy.id)).not_to be_nil
       end
     end
   end
