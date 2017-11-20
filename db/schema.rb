@@ -10,15 +10,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20171031165540) do
+ActiveRecord::Schema.define(version: 20171108151443) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "uuid-ossp"
+  enable_extension "citext"
 
   create_table "deputies", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
-    t.string   "user_email"
-    t.string   "deputy"
+    t.citext   "user_email", null: false
+    t.citext   "deputy",     null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["deputy"], name: "index_deputies_on_deputy", using: :btree
@@ -26,7 +27,7 @@ ActiveRecord::Schema.define(version: 20171031165540) do
   end
 
   create_table "permissions", force: :cascade do |t|
-    t.string   "permitted",       null: false
+    t.citext   "permitted",       null: false
     t.string   "permission_type", null: false
     t.string   "accessible_type", null: false
     t.uuid     "accessible_id",   null: false
@@ -48,8 +49,8 @@ ActiveRecord::Schema.define(version: 20171031165540) do
   end
 
   create_table "stamps", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
-    t.string   "name",           null: false
-    t.string   "owner_id",       null: false
+    t.citext   "name",           null: false
+    t.citext   "owner_id",       null: false
     t.datetime "created_at",     null: false
     t.datetime "updated_at",     null: false
     t.datetime "deactivated_at"

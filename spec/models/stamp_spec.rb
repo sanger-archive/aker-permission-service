@@ -2,6 +2,18 @@ require 'rails_helper'
 
 RSpec.describe Stamp, type: :model do
 
+  describe '#name' do
+    it 'should be sanitised' do
+      expect(create(:stamp, name: "  \n  Alpha\t  beta    gamma   \n").name).to eq('Alpha beta gamma')
+    end
+  end
+
+  describe '#owner_id' do
+    it 'should be sanitised' do
+      expect(create(:stamp, owner_id: "   ALPHA@BETA   ").owner_id).to eq('alpha@beta')
+    end
+  end
+
   describe 'validation' do
     context 'when creating a stamp' do
       it 'is not valid without a name' do
@@ -21,6 +33,15 @@ RSpec.describe Stamp, type: :model do
       it 'is not valid with a duplicate name (within the scope of active stamps)' do
         stamp = create(:stamp)
         expect(build(:stamp, name: stamp.name)).not_to be_valid
+      end
+
+      it 'is not valid with a duplicate sanitised name within the scope of active stamps' do
+        create(:stamp, name: 'alpha beta gamma')
+        expect(build(:stamp, name: "  \n  Alpha\t  beta    gamma   \n")).not_to be_valid
+      end
+
+      it 'is valid with a unique sanitised name' do
+        expect(build(:stamp, name: "  \n  Alpha\t  beta    gamma   \n")).to be_valid
       end
     end
 

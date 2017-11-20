@@ -8,6 +8,9 @@ class Stamp < ApplicationRecord
 
   validate :validate_name_active_uniqueness, if: :active?
 
+  before_validation :sanitise_name, :sanitise_owner
+  before_save :sanitise_name, :sanitise_owner
+
   def active?
     deactivated_at.nil?
   end
@@ -18,6 +21,24 @@ class Stamp < ApplicationRecord
 
   def deactivate!
     update_attributes!(deactivated_at: DateTime.now) if active?
+  end
+
+  def sanitise_name
+    if name
+      sanitised = name.strip.gsub(/\s+/, ' ')
+      if sanitised != name
+        self.name = sanitised
+      end
+    end
+  end
+
+  def sanitise_owner
+    if owner_id
+      sanitised = owner_id.strip.downcase
+      if sanitised != owner_id
+        self.owner_id = sanitised
+      end
+    end
   end
 
   private
