@@ -15,6 +15,7 @@ Rails.application.routes.draw do
         jsonapi_relationships only: [ :show, :get_related_resource ]
       end
       post 'permissions/check', to: 'permissions#check'
+      get 'deputies/list_principals/:email', to: 'deputies#list_principals', constraints: { email: /[^\/]+/ }, as: :list_principals
     end
   end
 end
