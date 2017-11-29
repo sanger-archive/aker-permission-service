@@ -4,6 +4,8 @@ module Api
       attributes :user_email, :deputy
       key_type :uuid
 
+      filter :user_email
+
       def self.updatable_fields(context)
         []
       end
