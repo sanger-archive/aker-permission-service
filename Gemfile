@@ -76,4 +76,5 @@ group :development, :test do
   gem 'jsonapi-resources-matchers', require: false
   gem 'webmock'
   gem 'sqlite3'
+  gem 'brakeman', require: false
 end
