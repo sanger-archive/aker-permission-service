@@ -1,12 +1,10 @@
 source 'https://rubygems.org'
 
-
 # Force git gems to use secure HTTPS
 git_source(:github) do |repo_name|
   repo_name = "#{repo_name}/#{repo_name}" unless repo_name.include?("/")
   "https://github.com/#{repo_name}.git"
 end
-
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 5.0.4'
@@ -32,11 +30,12 @@ gem 'jbuilder', '~> 2.5'
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 gem 'jsonapi-resources'
-gem 'zipkin-tracer'
 gem 'pg'
+gem 'zipkin-tracer'
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
-
+# Performance profiling
+gem 'rack-mini-profiler'
 
 ###
 # Sanger gems
@@ -45,14 +44,13 @@ gem 'aker_credentials_gem', github: 'sanger/aker-credentials'
 gem 'aker_permission_gem', github: 'sanger/aker-permission'
 gem 'matcon_client', github: 'sanger/aker-matcon-client'
 
-
 ###
 # Groups
 ###
 group :development do
   # Access an IRB console on exception pages or by using <%= console %> anywhere in the code.
-  gem 'web-console', '>= 3.3.0'
   gem 'listen', '~> 3.0.5'
+  gem 'web-console', '>= 3.3.0'
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'
   gem 'spring-watcher-listen', '~> 2.0.0'
@@ -62,19 +60,19 @@ group :test do
   # Code coverage for Ruby 1.9+ with a powerful configuration library and automatic merging of
   # coverage across test suites - https://github.com/colszowka/simplecov
   gem 'simplecov', require: false
-  # SimpleCov formatter to generate a simple index.html Rcov style
+  # SimpleCov formatter to generate a simple index.html Rcov style
   # https://github.com/fguillen/simplecov-rcov
   gem 'simplecov-rcov'
 end
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
-  gem 'byebug', platform: :mri
-  gem 'rspec-rails', '~> 3.5'
-  gem 'factory_bot_rails'
-  gem 'database_cleaner'
-  gem 'jsonapi-resources-matchers', require: false
-  gem 'webmock'
-  gem 'sqlite3'
   gem 'brakeman', require: false
+  gem 'byebug', platform: :mri
+  gem 'database_cleaner'
+  gem 'factory_bot_rails'
+  gem 'jsonapi-resources-matchers', require: false
+  gem 'rspec-rails', '~> 3.5'
+  gem 'sqlite3'
+  gem 'webmock'
 end
