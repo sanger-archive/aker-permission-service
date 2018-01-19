@@ -2,11 +2,14 @@ class PermissionChecker
   class << self
     attr_reader :unpermitted_uuids
 
-    # Returns a boolean to indicate whether 'names' (consisting of a Sanger user
-    # and their LDAP groups) have the 'permission_type' on the materials
-    # represented by the IDs in 'material_uuids'
-    # As long as the user or any of the groups have the 'permission_type' over
-    # all of the materials, this will return true. False otherwise.
+    # Returns a boolean. False if the user has no permission on one or more of
+    # the materials represented by 'material_uuids'
+    # For this method to return true, at least one of the following must be true
+    # for each material represented in 'material_uuids':
+    # * Any element of 'names' (consisting of a Sanger user email and their
+    #   LDAP groups) has the 'permission_type' for the material
+    # * Any element of 'names' is the owner (Sample Guardian) of the material
+    # * Any element of 'names' is a deputy of the material owner
     def check(permission_type, names, material_uuids)
       material_uuids = material_uuids.uniq
       @unpermitted_uuids = []
@@ -20,6 +23,9 @@ class PermissionChecker
 
     private
 
+    # Returns an array of material IDs upon which (at least one of) the user
+    # and/or groups in 'names' is authorised to perform the action specified in
+    # 'permission_type'
     def select_permitted_material_uuids(permission_type, names, material_uuids)
       AkerPermissionGem::Permission
         .joins('JOIN stamps ON (accessible_id=stamps.id)')
