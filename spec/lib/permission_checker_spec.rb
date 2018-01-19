@@ -155,5 +155,66 @@ RSpec.describe PermissionChecker do
         expect(PermissionChecker.unpermitted_uuids).to eq(uuids)
       end
     end
+
+    context 'when the materials are owned by someone who has deputised the requesting user' do
+      let(:uuids) { (0...2).map { SecureRandom.uuid } }
+      let(:owner) { 'boss@sanger.ac.uk' }
+      let(:deputy_user) { 'deputy@sanger.ac.uk' }
+      let(:deputy_group) { 'science_team' }
+
+      before do
+        uuids.each { |uuid| set_material_owner(uuid, owner) }
+        create(:deputy, user_email: owner, deputy: deputy_user)
+        create(:deputy, user_email: owner, deputy: deputy_group)
+      end
+
+      describe "through the user's email address" do
+        it 'should return true' do
+          expect(PermissionChecker.check(:edit, [deputy_user], uuids)).to eq(true)
+        end
+      end
+
+      describe 'through a group the user is in' do
+        it 'should return true' do
+          expect(PermissionChecker.check(:edit, [deputy_group], uuids)).to eq(true)
+        end
+      end
+
+      describe "through both the user's email and their group" do
+        it 'should return true' do
+          expect(PermissionChecker.check(:edit, [deputy_user, deputy_group], uuids)).to eq(true)
+        end
+      end
+    end
+
+    context 'when the materials are owned by someone who has NOT deputised the requesting user' do
+      let(:uuids) { (0...2).map { SecureRandom.uuid } }
+      let(:owner) { 'boss@sanger.ac.uk' }
+      let(:not_deputy_user) { 'not_deputy@sanger.ac.uk' }
+      let(:not_deputy_group) { 'science_team' }
+
+      before do
+        uuids.each { |uuid| set_material_owner(uuid, owner) }
+      end
+
+      describe "through the user's email address" do
+        it 'should return false' do
+          expect(PermissionChecker.check(:edit, [not_deputy_user], uuids)).to eq(false)
+        end
+      end
+
+      describe 'through a group the user is in' do
+        it 'should return false' do
+          expect(PermissionChecker.check(:edit, [not_deputy_group], uuids)).to eq(false)
+        end
+      end
+
+      describe "through both the user's email and their group" do
+        it 'should return false' do
+          expect(PermissionChecker.check(:edit, [not_deputy_user, not_deputy_group], uuids)).to eq(false)
+        end
+      end
+    end
+
   end
 end
