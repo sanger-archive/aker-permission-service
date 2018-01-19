@@ -34,7 +34,7 @@ class PermissionChecker
     # Returns an array of material IDs that the user is authorised to 'consume'
     # (order work on) as they are the owner (Sample Guardian) of that material
     def owned_material_uuids(material_uuids, names)
-      puts MatconClient::Material.where(
+      MatconClient::Material.where(
         _id: { '$in' => material_uuids },
         owner_id: { '$in' => names }
       ).select(:_id).map(&:_id)
