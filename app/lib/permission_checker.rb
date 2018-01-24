@@ -18,6 +18,7 @@ class PermissionChecker
       @unpermitted_uuids = material_uuids - permitted_uuids
       @unpermitted_uuids -= owned_material_uuids(@unpermitted_uuids, names)
       @unpermitted_uuids -= deputised_material_uuids(@unpermitted_uuids, names)
+      @unpermitted_uuids -= submitted_material_uuids(@unpermitted_uuids, names)
       return @unpermitted_uuids.empty?
     end
 
@@ -62,6 +63,27 @@ class PermissionChecker
                                     deputy: names).pluck(:user_email)
       # Remove materials that the user isn't authorised to order work on
       user_unauthorised_for = sample_guardian_emails - user_deputy_of
+      materials.delete_if { |mat| user_unauthorised_for.include?(mat[1]) }
+               .collect { |mat| mat[0] }
+    end
+
+    def submitted_material_uuids(material_uuids, names)
+      # Get materials that need checking for user consume permission
+      materials = MatconClient::Material.where(_id: { '$in' => material_uuids })
+                                        .map do |material|
+                                          [material._id, material.submitter_id]
+                                        end
+      return [] if materials.empty?
+      # Extract email addresses only - groups aren't needed
+      authorised_emails = names.select { |e| /@sanger.ac.uk/.match(e) }
+      # An LDAP group could contain "@sanger.ac.uk". This will cause a problem
+      # as it clashes with the user email address. TODO: refactor this so the
+      # user's email is passed as a separate parameter from the array of groups.
+
+      # Extract all Submitter email addresses
+      submitter_emails = materials.collect { |mat| mat[1] }.uniq
+      # Remove materials that the user isn't authorised to order work on
+      user_unauthorised_for = submitter_emails - authorised_emails
       materials.delete_if { |mat| user_unauthorised_for.include?(mat[1]) }
                .collect { |mat| mat[0] }
     end

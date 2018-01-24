@@ -9,9 +9,11 @@ RSpec.describe PermissionChecker do
     stamp
   end
 
-  def set_material_owner(uuid, owner)
+  def set_material_users(uuid, owner, submitter = "submitter@sanger.ac.uk")
     @material_owners ||= {}
     @material_owners[uuid] = owner
+    @material_submitters ||= {}
+    @material_submitters[uuid] = submitter
   end
 
   let(:response_headers) { { 'Content-Type' => 'application/json' } }
@@ -36,7 +38,8 @@ RSpec.describe PermissionChecker do
         donor_id: { required: true, type: 'string' },
         phenotype: { required: true, type: 'string' },
         supplier_name: { required: true, type: 'string' },
-        owner_id: { required: true, type: 'string' }
+        owner_id: { required: true, type: 'string' },
+        submitter_id: { required: true, type: 'string' }
       }
     }.to_json
   end
@@ -56,8 +59,8 @@ RSpec.describe PermissionChecker do
           ids = ids.select { |id| owners.include?(@material_owners[id]) }
           result = { _items: ids.map { |id| { _id: id } } }
         else
-          # Request made by deputised_material_uuids
-          result = { _items: ids.map { |id| { _id: id, owner_id: @material_owners[id] } } }
+          # Request made by deputised_material_uuids or submitted_material_uuids
+          result = { _items: ids.map { |id| { _id: id, owner_id: @material_owners[id], submitter_id: @material_submitters[id] } } }
         end
         { status: 200, body: result.to_json, headers: response_headers }
       end
@@ -78,7 +81,7 @@ RSpec.describe PermissionChecker do
       @material_uuids = @permitted_uuids + @unpermitted_uuids
 
       # All material UUIDs must also have an owner (sample guardian)
-      @material_uuids.each { |uuid| set_material_owner(uuid, 'default@sanger.ac.uk') }
+      @material_uuids.each { |uuid| set_material_users(uuid, 'default@sanger.ac.uk') }
 
       stub_materials_service
     end
@@ -126,7 +129,7 @@ RSpec.describe PermissionChecker do
       let(:uuids) { (0...2).map { SecureRandom.uuid } }
       let(:owner) { 'omega@sanger.ac.uk' }
       before do
-        uuids.each { |uuid| set_material_owner(uuid, owner) }
+        uuids.each { |uuid| set_material_users(uuid, owner) }
       end
 
       it 'should return true' do
@@ -143,7 +146,7 @@ RSpec.describe PermissionChecker do
       let(:uuids) { (0...2).map { SecureRandom.uuid } }
       let(:owner) { 'omega@sanger.ac.uk' }
       before do
-        uuids.each { |uuid| set_material_owner(uuid, owner) }
+        uuids.each { |uuid| set_material_users(uuid, owner) }
       end
 
       it 'should return false' do
@@ -163,7 +166,7 @@ RSpec.describe PermissionChecker do
       let(:deputy_group) { 'science_team' }
 
       before do
-        uuids.each { |uuid| set_material_owner(uuid, owner) }
+        uuids.each { |uuid| set_material_users(uuid, owner) }
         create(:deputy, user_email: owner, deputy: deputy_user)
         create(:deputy, user_email: owner, deputy: deputy_group)
       end
@@ -194,7 +197,7 @@ RSpec.describe PermissionChecker do
       let(:not_deputy_group) { 'science_team' }
 
       before do
-        uuids.each { |uuid| set_material_owner(uuid, owner) }
+        uuids.each { |uuid| set_material_users(uuid, owner) }
       end
 
       describe "through the user's email address" do
@@ -213,6 +216,34 @@ RSpec.describe PermissionChecker do
         it 'should return false' do
           expect(PermissionChecker.check(:edit, [not_deputy_user, not_deputy_group], uuids)).to eq(false)
         end
+      end
+    end
+
+    context 'when the materials were submitted by the requesting user' do
+      let(:uuids) { (0...2).map { SecureRandom.uuid } }
+      let(:owner) { 'boss@sanger.ac.uk' }
+      let(:submitter) { 'submitter1@sanger.ac.uk' }
+
+      before do
+        uuids.each { |uuid| set_material_users(uuid, owner, submitter) }
+      end
+
+      it 'should return true' do
+        expect(PermissionChecker.check(:edit, [submitter], uuids)).to eq(true)
+      end
+    end
+
+    context 'when the materials were NOT submitted by the requesting user' do
+      let(:uuids) { (0...2).map { SecureRandom.uuid } }
+      let(:owner) { 'boss@sanger.ac.uk' }
+      let(:submitter) { 'submitter1@sanger.ac.uk' }
+
+      before do
+        uuids.each { |uuid| set_material_users(uuid, owner, submitter) }
+      end
+
+      it 'should return false' do
+        expect(PermissionChecker.check(:edit, ['random@sanger.ac.uk'], uuids)).to eq(false)
       end
     end
 
