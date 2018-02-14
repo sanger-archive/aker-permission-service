@@ -39,4 +39,7 @@ Rails.application.configure do
 
   # Raises error for missing translations
   # config.action_view.raise_on_missing_translations = true
+
+  config.jwt_secret_key = 'test'
+  config.material_url = 'http://external-server:5000'
 end
