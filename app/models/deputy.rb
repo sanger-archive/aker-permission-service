@@ -1,7 +1,8 @@
 class Deputy < ApplicationRecord
 
-  validates :user_email, presence: true, uniqueness: { scope: :deputy }
+  validates :user_email, presence: true, uniqueness: { scope: :deputy, message: "must not already be your deputy" }
   validates :deputy, presence: true
+  validate :validate_not_self_assignment
 
   before_validation :sanitise_user, :sanitise_deputy
   before_save :sanitise_user, :sanitise_deputy
@@ -22,5 +23,12 @@ class Deputy < ApplicationRecord
         self.deputy = sanitised
       end
     end
+  end
+
+  private
+
+  # Prevent someone from assigning themself as a deputy
+  def validate_not_self_assignment
+    errors.add(:deputy, 'cannot be yourself') if user_email == deputy
   end
 end
