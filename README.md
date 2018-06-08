@@ -1,4 +1,6 @@
-# Aker - Stamps Serivce
+# Aker Permission service
+
+[![Build Status](https://travis-ci.org/sanger/aker-permission-service.svg?branch=devel)](https://travis-ci.org/sanger/aker-permission-service)
 
 A microservice for managing the permissions of materials at Sanger. This is done through Stamps.
 
