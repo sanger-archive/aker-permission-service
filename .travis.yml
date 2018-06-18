@@ -1,0 +1,27 @@
+git:
+  depth: false
+  submodules: false
+branches:
+  only:
+    - devel
+    - wip
+    - uat
+    - master
+language: ruby
+cache: bundler
+env:
+  global:
+    - CC_TEST_REPORTER_ID=89bc14f9bfc5895633faa0d325b2a4ac021dddcb7a1d8e612f2e2001e2fd05e5
+services:
+  - postgresql
+install:
+  - bundle install --jobs=3 --retry=3
+before_script:
+  - psql -c 'create database aker_stamps_test;' -U postgres
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+script:
+  - bundle exec rspec
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
