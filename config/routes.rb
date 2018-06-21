@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  health_check_routes
+
   namespace :api do
     namespace :v1 do
       jsonapi_resources :stamps do
