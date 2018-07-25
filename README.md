@@ -1,4 +1,8 @@
-# Aker - Stamps Serivce
+# Aker Permission service
+
+[![Build Status](https://travis-ci.org/sanger/aker-permission-service.svg?branch=devel)](https://travis-ci.org/sanger/aker-permission-service)
+[![Maintainability](https://api.codeclimate.com/v1/badges/befc87f072367de9c860/maintainability)](https://codeclimate.com/github/sanger/aker-permission-service/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/befc87f072367de9c860/test_coverage)](https://codeclimate.com/github/sanger/aker-permission-service/test_coverage)
 
 A microservice for managing the permissions of materials at Sanger. This is done through Stamps.
 
